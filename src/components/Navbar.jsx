@@ -6,22 +6,19 @@ const Navbar = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { authenticated, user, logout, isAdmin } = useAuth()
+  const { authenticated, logout, isAdmin } = useAuth()
 
   const navLinks = [
     { path: '/', label: 'Início' },
     { path: '/catalog', label: 'Catálogo' },
     { path: '/impact', label: 'Impacto' },
-    { path: '/about', label: 'Sobre Nós' },
+    { path: '/about', label: 'Sobre' },
   ]
 
   const adminLinks = [
     { path: '/admin', label: 'Produtos' },
     { path: '/admin/farmacias', label: 'Farmácias' },
   ]
-
-  const isAdminPage = location.pathname.startsWith('/admin')
-  const isAdminUser = isAdmin()
 
   const handleLogout = () => {
     logout()
@@ -30,14 +27,14 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-sm">
-      <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-        <Link to="/" className="text-2xl font-black tracking-tighter text-[#2f56c3] font-headline">
+    <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
+      <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 py-3 md:py-4 max-w-7xl mx-auto">
+        <Link to="/" className="text-xl sm:text-2xl font-black tracking-tighter text-[#2f56c3] font-headline">
           MedSave
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-8 font-headline font-bold tracking-tight text-sm">
+        {/* Desktop Menu - visível em telas médias e grandes */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-8 font-headline font-bold text-sm">
           {navLinks.map((link) => (
             <Link
               key={link.path}
@@ -45,39 +42,25 @@ const Navbar = () => {
               className={`${
                 location.pathname === link.path
                   ? 'text-[#006d35] border-b-2 border-[#006d35] pb-1'
-                  : 'text-slate-600 font-medium hover:text-[#006d35] transition-colors'
+                  : 'text-slate-600 hover:text-[#006d35] transition-colors'
               }`}
             >
               {link.label}
             </Link>
           ))}
 
-          {/* Admin Menu - só aparece se for admin */}
-          {isAdminUser && (
+          {isAdmin() && (
             <div className="relative group">
-              <button
-                className={`flex items-center gap-1 ${
-                  isAdminPage
-                    ? 'text-[#006d35] border-b-2 border-[#006d35] pb-1'
-                    : 'text-slate-600 font-medium hover:text-[#006d35] transition-colors'
-                }`}
-              >
+              <button className="text-slate-600 hover:text-[#006d35] flex items-center gap-1">
                 Admin
-                <span className="material-symbols-outlined text-base group-hover:rotate-180 transition-transform">
-                  arrow_drop_down
-                </span>
+                <span className="material-symbols-outlined text-base">arrow_drop_down</span>
               </button>
-              
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full right-0 mt-2 w-40 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 {adminLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`block px-4 py-3 text-sm hover:bg-surface-container-low first:rounded-t-lg last:rounded-b-lg ${
-                      location.pathname === link.path
-                        ? 'text-[#006d35] font-bold bg-surface-container-low'
-                        : 'text-slate-600'
-                    }`}
+                    className="block px-4 py-2 text-sm hover:bg-gray-50"
                   >
                     {link.label}
                   </Link>
@@ -86,25 +69,24 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Login/Logout Buttons */}
           {authenticated ? (
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-error text-white rounded-full text-sm font-bold hover:bg-error/90 transition-colors"
+              className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-bold hover:bg-red-600"
             >
               Sair
             </button>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex gap-2">
               <Link
                 to="/login"
-                className="px-4 py-2 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-bold hover:bg-green-700"
               >
                 Entrar
               </Link>
               <Link
                 to="/cadastro"
-                className="px-4 py-2 border border-primary text-primary rounded-full text-sm font-bold hover:bg-primary/10 transition-colors"
+                className="px-4 py-2 border border-green-600 text-green-600 rounded-full text-sm font-bold hover:bg-green-50"
               >
                 Cadastrar
               </Link>
@@ -112,31 +94,29 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden p-2 hover:bg-slate-50 rounded-full"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <span className="material-symbols-outlined text-[#006d35]">
-              {isMenuOpen ? 'close' : 'menu'}
-            </span>
-          </button>
-        </div>
+        {/* Botão Mobile */}
+        <button 
+          className="md:hidden p-2"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          <span className="material-symbols-outlined text-[#2f56c3] text-2xl">
+            {isMenuOpen ? 'close' : 'menu'}
+          </span>
+        </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Menu Mobile - aparece apenas em telas pequenas */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-xl px-8 py-4 border-t border-outline-variant/20">
-          <div className="flex flex-col space-y-4">
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 shadow-lg">
+          <div className="flex flex-col space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`${
+                className={`py-2 text-base ${
                   location.pathname === link.path
                     ? 'text-[#006d35] font-bold'
-                    : 'text-slate-600 font-medium'
+                    : 'text-slate-600'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -144,33 +124,29 @@ const Navbar = () => {
               </Link>
             ))}
             
-            {/* Admin section in mobile */}
-            {isAdminUser && (
-              <div className="pt-2 border-t border-outline-variant/20">
-                <p className="text-xs font-bold text-outline uppercase mb-2">Admin</p>
-                {adminLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className={`block py-2 ${
-                      location.pathname === link.path
-                        ? 'text-[#006d35] font-bold'
-                        : 'text-slate-600'
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+            {isAdmin() && (
+              <>
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-xs text-gray-400 uppercase mb-2">Admin</p>
+                  {adminLinks.map((link) => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className="block py-2 text-slate-600"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </>
             )}
             
-            {/* Login/Logout mobile */}
-            <div className="pt-2 border-t border-outline-variant/20">
+            <div className="pt-2 border-t border-gray-100">
               {authenticated ? (
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left py-2 text-error font-medium"
+                  className="w-full text-left py-2 text-red-600 font-medium"
                 >
                   Sair
                 </button>
@@ -178,14 +154,14 @@ const Navbar = () => {
                 <div className="flex flex-col gap-2">
                   <Link
                     to="/login"
-                    className="block py-2 text-primary font-medium"
+                    className="py-2 text-green-600 font-medium text-center bg-green-50 rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Entrar
                   </Link>
                   <Link
                     to="/cadastro"
-                    className="block py-2 text-primary font-medium"
+                    className="py-2 text-green-600 font-medium text-center border border-green-600 rounded-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Cadastrar
