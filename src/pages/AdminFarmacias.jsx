@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createFarmacia, deleteFarmacia, getFarmacias, updateFarmacia } from '../api/axios';
 import CepAutocomplete from '../components/CepAutocomplete';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { buscarCoordenadasPorEndereco } from '../services/geocoding';
@@ -31,8 +31,8 @@ const AdminFarmacias = () => {
   const carregarFarmacias = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8080/api/farmacias');
-      setFarmacias(response.data);
+      const data = await getFarmacias();
+      setFarmacias(data);
     } catch (error) {
       console.error('Erro ao carregar farmácias:', error);
       alert('Erro ao carregar farmácias');
@@ -100,9 +100,9 @@ const AdminFarmacias = () => {
       console.log('📤 Enviando farmácia:', farmaciaData);
 
       if (editingFarmacia) {
-        await axios.put(`http://localhost:8080/api/farmacias/${editingFarmacia.id}`, farmaciaData);
+        await updateFarmacia(editingFarmacia.id, farmaciaData);
       } else {
-        await axios.post('http://localhost:8080/api/farmacias', farmaciaData);
+        await createFarmacia(farmaciaData);
       }
       
       await carregarFarmacias();
@@ -128,7 +128,7 @@ const AdminFarmacias = () => {
     if (!window.confirm('Tem certeza que deseja deletar esta farmácia?')) return;
     
     try {
-      await axios.delete(`http://localhost:8080/api/farmacias/${id}`);
+      await deleteFarmacia(id);
       await carregarFarmacias();
       alert('Farmácia deletada com sucesso!');
     } catch (error) {

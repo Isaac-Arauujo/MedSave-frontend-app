@@ -34,8 +34,22 @@ api.interceptors.response.use(
       url: error.config?.url,
       method: error.config?.method
     })
-    
-    if (error.response?.status === 401) {
+
+    const status = error.response?.status
+    const path = error.config?.url || ''
+    const method = (error.config?.method || 'get').toLowerCase()
+
+    // Rotas administrativas exigem JWT válido com ROLE_ADMIN. Token antigo (ex.: antes do JWT)
+    // ou sessão inválida costuma vir como 403 no Spring Security stateless.
+    const isPublicCep = path.includes('/farmacias/buscar-cep')
+    const isAdminApi =
+      !isPublicCep &&
+      (path.includes('/farmacias') ||
+        path.includes('/produtos/admin') ||
+        path.includes('/upload') ||
+        (path.startsWith('/produtos') && method !== 'get'))
+
+    if (status === 401 || (status === 403 && isAdminApi)) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       window.location.href = '/login'

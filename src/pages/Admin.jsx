@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getAllProductsAdmin, createProduct, updateProduct, deleteProduct } from '../api/axios'
-import axios from 'axios'
+import { getAllProductsAdmin, createProduct, updateProduct, deleteProduct, getFarmacias, deleteFarmacia } from '../api/axios'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ImageUpload from '../components/ImageUpload'
 import { Link } from 'react-router-dom'
@@ -33,7 +32,7 @@ const Admin = () => {
       setLoading(true)
       const [productsData, farmaciasData] = await Promise.all([
         getAllProductsAdmin(),
-        axios.get('http://localhost:8080/api/farmacias').then(res => res.data)
+        getFarmacias()
       ])
       setProducts(productsData)
       setFarmacias(farmaciasData)
@@ -146,7 +145,7 @@ const Admin = () => {
   const handleDeleteFarmacia = async (id) => {
     if (!window.confirm('Tem certeza que deseja deletar esta farmácia?')) return
     try {
-      await axios.delete(`http://localhost:8080/api/farmacias/${id}`)
+      await deleteFarmacia(id)
       await fetchData()
       alert('Farmácia deletada com sucesso!')
     } catch (err) {
