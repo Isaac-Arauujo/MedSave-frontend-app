@@ -6,10 +6,10 @@ const Footer = () => {
       <div className="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full max-w-7xl mx-auto">
         <div className="mb-8 md:mb-0">
           <div className="text-xl font-bold text-[#2f56c3] mb-4 font-headline">
-            MedSave
+            MediSave
           </div>
           <p className="font-body text-sm leading-relaxed text-slate-500 max-w-xs">
-            © 2026 MedSave. Economia consciente para um futuro mais saudável.
+            © 2026 MediSave. Economia consciente para um futuro mais saudável.
           </p>
         </div>
         

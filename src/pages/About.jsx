@@ -66,9 +66,10 @@ const About = () => {
               </div>
               <div>
                 <h3 className="font-headline text-2xl font-bold text-tertiary mb-2">Fundação Visionária</h3>
-                <p className="text-on-surface-variant leading-relaxed">
-                  Fundada por especialistas em farmacologia e gestão sustentável, a MedSave nasceu da observação direta do desperdício massivo na cadeia de distribuição de medicamentos brasileira. O que começou como um projeto de pesquisa tornou-se o padrão ouro em curadoria clínica.
-                </p>
+                <h3 className="font-headline text-2xl font-bold text-tertiary mb-2">Fundação Visionária</h3>
+<p className="text-on-surface-variant leading-relaxed">
+  A MedSave nasceu a partir de um projeto escolar, onde surgiu a ideia de reduzir o desperdício de medicamentos e torná-los mais acessíveis. O projeto se destacou tanto que três amigos decidiram se unir para transformar essa visão em realidade, dando início a uma jornada empreendedora com propósito e impacto social.
+</p>
               </div>
             </div>
 
