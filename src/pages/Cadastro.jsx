@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { cadastrar } from '../api/axios';
 
 const Cadastro = () => {
   const [formData, setFormData] = useState({
@@ -58,8 +59,6 @@ const Cadastro = () => {
     setLoading(true);
 
     try {
-      // Importar dinamicamente para evitar dependência circular
-      const { cadastrar } = await import('../api/axios');
       const result = await cadastrar({
         nome: formData.nome.trim(),
         email: formData.email.trim(),

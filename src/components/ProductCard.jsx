@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { buildAssetUrl } from '../api/config'
 import { WHATSAPP_LINK } from '../utils/constants'
 
 const ProductCard = ({ product }) => {
@@ -31,7 +32,7 @@ const ProductCard = ({ product }) => {
         <img 
           alt={product.nome} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          src={product.imagemUrl ? `http://localhost:8080${product.imagemUrl}` : 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop'}
+          src={buildAssetUrl(product.imagemUrl) || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop'}
         />
         
         {discount > 0 && (

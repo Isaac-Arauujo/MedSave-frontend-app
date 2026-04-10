@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { getAllProductsAdmin, createProduct, updateProduct, deleteProduct, getFarmacias, deleteFarmacia } from '../api/axios'
+import { buildAssetUrl } from '../api/config'
 import LoadingSpinner from '../components/LoadingSpinner'
-import ImageUpload from '../components/ImageUpload'
+import ImageUpload from '../components/ImageUpLoad'
 import { Link } from 'react-router-dom'
 
 const Admin = () => {
@@ -255,7 +256,7 @@ const Admin = () => {
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                               {product.imagemUrl ? (
-                                <img src={`http://localhost:8080${product.imagemUrl}`} alt={product.nome} className="w-full h-full object-cover rounded-lg" />
+                                <img src={buildAssetUrl(product.imagemUrl)} alt={product.nome} className="w-full h-full object-cover rounded-lg" />
                               ) : (
                                 <span className="material-symbols-outlined text-gray-400 text-sm">image</span>
                               )}
@@ -303,7 +304,7 @@ const Admin = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                         {product.imagemUrl ? (
-                          <img src={`http://localhost:8080${product.imagemUrl}`} alt={product.nome} className="w-full h-full object-cover rounded-lg" />
+                          <img src={buildAssetUrl(product.imagemUrl)} alt={product.nome} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <span className="material-symbols-outlined text-gray-400">image</span>
                         )}
@@ -497,7 +498,7 @@ const Admin = () => {
                 </select>
               </div>
               <ImageUpload
-                currentImage={formData.imagemUrl ? `http://localhost:8080${formData.imagemUrl}` : null}
+                currentImage={buildAssetUrl(formData.imagemUrl)}
                 onImageUpload={(url) => setFormData(prev => ({ ...prev, imagemUrl: url }))}
                 onImageRemove={() => setFormData(prev => ({ ...prev, imagemUrl: '' }))}
               />

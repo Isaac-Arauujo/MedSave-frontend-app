@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = '5511953970812' // Substitua pelo seu número
+export const WHATSAPP_NUMBER = '5511926818308' // Substitua pelo seu número
 
 export const WHATSAPP_MESSAGE = (product) => {
   return encodeURIComponent(

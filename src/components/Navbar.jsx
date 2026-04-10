@@ -30,7 +30,7 @@ const Navbar = () => {
     <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
       <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 py-3 md:py-4 max-w-7xl mx-auto">
         <Link to="/" className="text-xl sm:text-2xl font-black tracking-tighter text-[#2f56c3] font-headline">
-          MedSave
+          MediSave
         </Link>
 
         {/* Desktop Menu - visível em telas médias e grandes */}

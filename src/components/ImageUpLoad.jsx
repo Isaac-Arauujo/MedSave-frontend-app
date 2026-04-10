@@ -33,10 +33,8 @@ const ImageUpload = ({ currentImage, onImageUpload, onImageRemove }) => {
     setUploading(true)
     try {
       const imageUrl = await uploadImage(file)
-      console.log('Imagem uploaded:', imageUrl)
       onImageUpload(imageUrl)
     } catch (error) {
-      console.error('Erro no upload:', error)
       alert('Erro ao fazer upload da imagem')
       setPreview(null)
     } finally {

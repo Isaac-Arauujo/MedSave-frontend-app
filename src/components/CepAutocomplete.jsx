@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { buscarCep as buscarCepApi } from '../api/axios';
 
 const CepAutocomplete = ({ onCepFound }) => {
   const [cep, setCep] = useState('');
@@ -13,17 +13,16 @@ const CepAutocomplete = ({ onCepFound }) => {
     setError('');
     
     try {
-      const cepLimpo = cep.replace(/\D/g, '');
-      const response = await axios.get(`http://localhost:8080/api/farmacias/buscar-cep/${cepLimpo}`);
+      const response = await buscarCepApi(cep);
       
-      if (response.data && !response.data.erro) {
+      if (response && !response.erro) {
         onCepFound({
-          cep: response.data.cep,
-          endereco: response.data.logradouro,
-          bairro: response.data.bairro,
-          cidade: response.data.localidade,
-          estado: response.data.uf,
-          complemento: response.data.complemento
+          cep: response.cep,
+          endereco: response.logradouro,
+          bairro: response.bairro,
+          cidade: response.localidade,
+          estado: response.uf,
+          complemento: response.complemento
         });
         setError('');
       } else {

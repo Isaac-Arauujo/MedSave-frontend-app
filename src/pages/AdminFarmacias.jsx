@@ -61,17 +61,14 @@ const AdminFarmacias = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validar campos obrigatórios
       if (!formData.nome || !formData.cep || !formData.endereco || !formData.cidade || !formData.estado) {
         alert('Preencha todos os campos obrigatórios: Nome, CEP, Endereço, Cidade e Estado');
         return;
       }
 
-      // 👇 BUSCAR COORDENADAS AUTOMATICAMENTE (AGORA DENTRO DA FUNÇÃO)
       let latitude = formData.latitude;
       let longitude = formData.longitude;
 
-      // Se não tiver latitude/longitude preenchidas, tenta buscar pelo endereço
       if (!latitude || !longitude) {
         const enderecoCompleto = `${formData.endereco}${formData.numero ? ', ' + formData.numero : ''}, ${formData.bairro ? formData.bairro + ', ' : ''}${formData.cidade} - ${formData.estado}`;
         
@@ -97,8 +94,6 @@ const AdminFarmacias = () => {
         googleMapsUrl: formData.googleMapsUrl?.trim() || null
       };
 
-      console.log('📤 Enviando farmácia:', farmaciaData);
-
       if (editingFarmacia) {
         await updateFarmacia(editingFarmacia.id, farmaciaData);
       } else {
@@ -109,8 +104,6 @@ const AdminFarmacias = () => {
       closeModal();
       alert('Farmácia salva com sucesso!');
     } catch (error) {
-      console.error('❌ Erro completo:', error.response?.data);
-      
       let errorMessage = 'Erro ao salvar farmácia';
       if (error.response?.data?.fieldErrors) {
         errorMessage = Object.entries(error.response.data.fieldErrors)

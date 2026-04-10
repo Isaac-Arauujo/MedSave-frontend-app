@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getProducts } from '../api/axios'
+import { buildAssetUrl } from '../api/config'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { WHATSAPP_LINK } from '../utils/constants'
 import MapaFarmacia from '../components/MapaFarmacia'
@@ -80,7 +81,7 @@ const ProductDetail = () => {
               <img 
                 alt={product.nome} 
                 className="w-full h-full object-contain scale-90 group-hover:scale-100 transition-transform duration-700" 
-                src={product.imagemUrl ? `http://localhost:8080${product.imagemUrl}` : 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop'}
+                src={buildAssetUrl(product.imagemUrl) || 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop'}
               />
             </div>
           </div>

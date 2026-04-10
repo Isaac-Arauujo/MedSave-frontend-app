@@ -1,9 +1,11 @@
 import axios from 'axios'
+import { API_URL } from './config'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: API_URL,
   timeout: 10000,
   headers: {
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 })
@@ -11,7 +13,6 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log(`📤 ${config.method.toUpperCase()} ${config.url}`, config.data)
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -23,18 +24,8 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    console.log(`📥 ${response.status} ${response.config.url}`, response.data)
-    return response
-  },
+  (response) => response,
   (error) => {
-    console.error('❌ Erro na requisição:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-      method: error.config?.method
-    })
-
     const status = error.response?.status
     const path = error.config?.url || ''
     const method = (error.config?.method || 'get').toLowerCase()

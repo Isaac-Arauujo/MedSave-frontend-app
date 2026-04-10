@@ -15,8 +15,8 @@ const HeroSection = () => {
           </h1>
           
           <p className="text-sm md:text-base lg:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
-            Economize no seu dia a dia e ajude a reduzir o desperdício de medicamentos. Produtos de farmácias locais com desconto por validade — ideal para uso imediato.
-          </p>
+Medicamentos dentro da validade, com preços reduzidos.
+ Sem truque  apenas produtos próximos do vencimento           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
             <Link 
