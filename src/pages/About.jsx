@@ -8,7 +8,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 z-10">
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary-container/20 text-on-primary-fixed-variant text-xs font-semibold mb-6">
-              EST. 2026 • MEDSAVE CURATOR
+              EST. 2026 • MEDISAVE CURATOR
             </div>
             <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-tertiary tracking-tight leading-[1.1] mb-8">
               Redefinindo o <span className="text-primary italic">Futuro</span> da Farmácia.
@@ -51,7 +51,7 @@ const About = () => {
       <section className="px-8 py-20 bg-surface-container-low">
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
-            <h2 className="font-headline text-3xl md:text-4xl font-extrabold text-tertiary mb-4">A História da MedSave</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-extrabold text-tertiary mb-4">A História da MediSave</h2>
             <div className="h-1.5 w-24 bg-primary rounded-full"></div>
           </div>
           
@@ -66,9 +66,8 @@ const About = () => {
               </div>
               <div>
                 <h3 className="font-headline text-2xl font-bold text-tertiary mb-2">Fundação Visionária</h3>
-                <h3 className="font-headline text-2xl font-bold text-tertiary mb-2">Fundação Visionária</h3>
 <p className="text-on-surface-variant leading-relaxed">
-  A MedSave nasceu a partir de um projeto escolar, onde surgiu a ideia de reduzir o desperdício de medicamentos e torná-los mais acessíveis. O projeto se destacou tanto que três amigos decidiram se unir para transformar essa visão em realidade, dando início a uma jornada empreendedora com propósito e impacto social.
+  A MediSave nasceu a partir de um projeto escolar, onde surgiu a ideia de reduzir o desperdício de medicamentos e torná-los mais acessíveis. O projeto se destacou tanto que três amigos decidiram se unir para transformar essa visão em realidade, dando início a uma jornada empreendedora com propósito e impacto social.
 </p>
               </div>
             </div>
@@ -84,7 +83,7 @@ const About = () => {
             <div className="bg-tertiary p-10 rounded-lg text-white">
               <h4 className="font-headline text-xl font-bold mb-4">Inovação Transparente</h4>
               <p className="text-sm opacity-80 leading-relaxed">
-                Acreditamos que a tecnologia deve servir à humanidade, não apenas ao lucro. Por isso, cada algoritmo da MedSave prioriza o acesso antes da margem.
+                Acreditamos que a tecnologia deve servir à humanidade, não apenas ao lucro. Por isso, cada algoritmo da MediSave prioriza o acesso antes da margem.
               </p>
             </div>
 
