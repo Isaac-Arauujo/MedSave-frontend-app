@@ -41,7 +41,7 @@ Medicamentos dentro da validade, com preços reduzidos.
             <img 
               alt="Healthcare Professional" 
               className="rounded-lg w-full h-auto object-cover"
-              src="https://images.unsplash.com/photo-1666214280557-f1b5022eb634?q=80&w=2070&auto=format&fit=crop"
+              src="https://imgur.com/a/Bhvh4iB"
             />
             <div className="absolute bottom-4 right-4 bg-white/90 p-3 rounded-lg shadow-lg">
               <p className="text-xs font-bold text-green-600 uppercase">+2.5k kg</p>
