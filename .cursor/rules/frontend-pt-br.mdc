@@ -1,0 +1,16 @@
+---
+description: Todo texto visível do frontend MedSave deve estar em português brasileiro
+globs: src/**/*
+alwaysApply: true
+---
+
+# Idioma do frontend — Português (BR)
+
+Todo texto voltado ao usuário no frontend MedSave deve estar em **português brasileiro**:
+
+- Labels, placeholders, botões, títulos e descrições
+- Mensagens de erro, validação, empty state e loading
+- Textos de navegação, footer e toasts
+- Mensagens de `handleApiError` e schemas Zod
+
+Exceções: nomes de marca (MedSave), termos técnicos internos e identificadores de código.

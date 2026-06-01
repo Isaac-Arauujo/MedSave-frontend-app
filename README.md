@@ -1,3 +1,19 @@
+# MedSave Frontend
+
+App React + TypeScript (Vite). Entrada ativa: `src/main.tsx`.
+
+## API
+
+Configure a URL do backend (sem `/api` automático):
+
+```env
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+Copie `.env.example` para `.env` em desenvolvimento. Em produção, use `VITE_API_BASE_URL` (veja `.env.production.example`).
+
+---
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
