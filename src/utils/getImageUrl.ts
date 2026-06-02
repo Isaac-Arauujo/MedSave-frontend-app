@@ -1,4 +1,6 @@
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+import { getApiBaseUrl } from '../config/apiBaseUrl';
+
+const apiBaseUrl = getApiBaseUrl();
 
 export const getImageUrl = (path?: string): string | null => {
   if (!path) {
