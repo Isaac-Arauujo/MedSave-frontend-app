@@ -1,4 +1,5 @@
 import type { PaymentMethod } from './CheckoutTypes';
+import type { CardPaymentPayload } from './MercadoPagoTypes';
 import type { OrderResponse } from './OrderTypes';
 
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'REFUNDED';
@@ -27,6 +28,7 @@ export interface PaymentResponse {
 export interface InitiatePaymentRequest {
   orderId: number;
   method: PaymentMethod;
+  card?: CardPaymentPayload;
 }
 
 export interface PaymentLocationState {

@@ -1,7 +1,8 @@
 import { differenceInSeconds, parseISO } from 'date-fns';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { MercadoPagoCardBrick } from '../../components/payment/MercadoPagoCardBrick';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -20,6 +21,7 @@ import { ROUTES } from '../../constants/routes';
 import { usePayment } from '../../hooks/usePayment';
 import { useCheckoutStore } from '../../store/checkoutStore';
 import type { PaymentMethod } from '../../types/CheckoutTypes';
+import type { CardPaymentPayload, MercadoPagoCardFormData } from '../../types/MercadoPagoTypes';
 import type { PaymentLocationState } from '../../types/PaymentTypes';
 import { formatCurrency } from '../../utils/formatCurrency';
 
@@ -58,6 +60,7 @@ export const PaymentPage = () => {
     isExpired,
     canPoll,
     setIsExpired,
+    setError,
     initiate,
     refreshStatus,
     retry,
@@ -74,7 +77,7 @@ export const PaymentPage = () => {
   }, [clearCheckoutSession]);
 
   useEffect(() => {
-    if (!orderId || paymentMethod === 'CREDIT_CARD') {
+    if (!orderId || paymentMethod !== 'PIX') {
       return;
     }
 
@@ -82,6 +85,30 @@ export const PaymentPage = () => {
       // Erro tratado no hook (estado error).
     });
   }, [orderId, paymentMethod, initiate]);
+
+  const mapCardFormToPayload = useCallback((formData: MercadoPagoCardFormData): CardPaymentPayload => {
+    return {
+      token: formData.token,
+      paymentMethodId: formData.payment_method_id,
+      issuerId: formData.issuer_id,
+      installments: formData.installments,
+      identificationType: formData.payer?.identification?.type,
+      identificationNumber: formData.payer?.identification?.number,
+    };
+  }, []);
+
+  const handleCardBrickSubmit = useCallback(
+    async (formData: MercadoPagoCardFormData) => {
+      setRejectionMessage(null);
+      const result = await initiate('CREDIT_CARD', mapCardFormToPayload(formData));
+      if (result) {
+        toast.success('Pagamento enviado. Aguardando confirmação.');
+        return;
+      }
+      throw new Error('Não foi possível processar o pagamento.');
+    },
+    [initiate, mapCardFormToPayload]
+  );
 
   useEffect(() => {
     if (!initiation?.expiresAt || isExpired) {
@@ -110,8 +137,7 @@ export const PaymentPage = () => {
       !orderId ||
       !canPoll ||
       isExpired ||
-      isTerminalStatus(currentStatus) ||
-      paymentMethod === 'CREDIT_CARD'
+      isTerminalStatus(currentStatus)
     ) {
       return;
     }
@@ -162,9 +188,9 @@ export const PaymentPage = () => {
 
   const handleRetry = async () => {
     if (paymentMethod === 'CREDIT_CARD') {
-      toast.error(
-        'Pagamento por cartão exige tokenização via Mercado Pago SDK/CardForm e ainda não está disponível neste ambiente.'
-      );
+      setRejectionMessage(null);
+      setError(null);
+      window.location.reload();
       return;
     }
 
@@ -199,6 +225,12 @@ export const PaymentPage = () => {
   if (paymentMethod === 'PIX' && isInitiating && !initiation) {
     return <PageLoader message="Iniciando pagamento..." />;
   }
+
+  if (paymentMethod === 'CREDIT_CARD' && isInitiating) {
+    return <PageLoader message="Processando pagamento com cartão..." />;
+  }
+
+  const orderTotal = order?.total ?? 0;
 
   if (error && !initiation) {
     return <ErrorState message={error} onRetry={() => void handleRetry()} />;
@@ -315,19 +347,30 @@ export const PaymentPage = () => {
           </div>
         )}
 
-        {!isExpired && paymentMethod === 'CREDIT_CARD' && !paymentUrl && (
-          <div className="mb-6 rounded-2xl border border-outline-variant bg-surface-container-low p-4">
-            <p className="font-medium text-on-surface">Pagamento com cartão</p>
-            <p className="mt-2 text-sm text-on-surface-variant">
-              O pagamento por cartão exige tokenização segura via Mercado Pago (SDK/Checkout
-              Transparente). Neste ambiente local, o formulário de cartão ainda não está integrado.
+        {!isExpired &&
+          paymentMethod === 'CREDIT_CARD' &&
+          !initiation &&
+          !isTerminalStatus(currentStatus) &&
+          orderTotal > 0 && (
+            <div className="mb-6">
+              <MercadoPagoCardBrick
+                amount={orderTotal}
+                onSubmit={handleCardBrickSubmit}
+                onError={(message) => {
+                  setError(message);
+                }}
+              />
+            </div>
+          )}
+
+        {!isExpired &&
+          paymentMethod === 'CREDIT_CARD' &&
+          !initiation &&
+          orderTotal <= 0 && (
+            <p className="mb-4 text-sm text-on-surface-variant">
+              Valor do pedido indisponível. Volte ao checkout e tente novamente.
             </p>
-            <p className="mt-2 text-sm text-on-surface-variant">
-              Para testar o fluxo completo, use PIX ou configure a integração de cartão com o SDK do
-              Mercado Pago.
-            </p>
-          </div>
-        )}
+          )}
 
         {showRetry && (
           <Button type="button" variant="primary" onClick={() => void handleRetry()} isLoading={isInitiating}>

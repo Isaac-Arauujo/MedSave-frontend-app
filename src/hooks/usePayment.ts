@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import axios from 'axios';
 import * as paymentApi from '../api/paymentApi';
 import type { PaymentMethod } from '../types/CheckoutTypes';
+import type { CardPaymentPayload } from '../types/MercadoPagoTypes';
 import type { PaymentInitiateResponse, PaymentResponse } from '../types/PaymentTypes';
 import { handleApiError } from '../utils/handleApiError';
 
@@ -25,14 +26,13 @@ export const usePayment = (orderId: number | null) => {
     !pollingStopped;
 
   const initiate = useCallback(
-    async (method: PaymentMethod) => {
+    async (method: PaymentMethod, card?: CardPaymentPayload) => {
       if (!orderId) {
         return null;
       }
 
-      if (method === 'CREDIT_CARD') {
-        const message =
-          'Pagamento por cartão exige tokenização via Mercado Pago SDK/CardForm e ainda não está disponível neste ambiente.';
+      if (method === 'CREDIT_CARD' && !card) {
+        const message = 'Preencha os dados do cartão para continuar.';
         setError(message);
         initiationSucceededRef.current = false;
         setPollingStopped(true);
@@ -46,7 +46,7 @@ export const usePayment = (orderId: number | null) => {
         setPollingStopped(false);
         initiationSucceededRef.current = false;
 
-        const result = await paymentApi.initiatePayment({ orderId, method });
+        const result = await paymentApi.initiatePayment({ orderId, method, card });
 
         if (
           method === 'PIX' &&
@@ -54,7 +54,7 @@ export const usePayment = (orderId: number | null) => {
           !result.pixQrCodeBase64
         ) {
           const message =
-            'Não foi possível gerar o PIX. Verifique se as credenciais do Mercado Pago (sandbox) estão configuradas no servidor.';
+            'Não foi possível gerar o PIX. Verifique as credenciais do Mercado Pago no servidor.';
           setError(message);
           setInitiation(null);
           setPayment(null);
@@ -116,9 +116,12 @@ export const usePayment = (orderId: number | null) => {
   }, [orderId]);
 
   const retry = useCallback(
-    async (method: PaymentMethod) => {
+    async (method: PaymentMethod, card?: CardPaymentPayload) => {
       setPollingStopped(false);
-      return initiate(method);
+      setInitiation(null);
+      setPayment(null);
+      initiationSucceededRef.current = false;
+      return initiate(method, card);
     },
     [initiate]
   );

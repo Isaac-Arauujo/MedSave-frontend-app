@@ -1,9 +1,15 @@
+import type { PaymentPublicConfig } from '../types/MercadoPagoTypes';
 import type {
   InitiatePaymentRequest,
   PaymentInitiateResponse,
   PaymentResponse,
 } from '../types/PaymentTypes';
 import { api } from './axiosInstance';
+
+export const getPaymentPublicConfig = async (): Promise<PaymentPublicConfig> => {
+  const response = await api.get<PaymentPublicConfig>('/payments/config');
+  return response.data;
+};
 
 export const initiatePayment = async (
   data: InitiatePaymentRequest
