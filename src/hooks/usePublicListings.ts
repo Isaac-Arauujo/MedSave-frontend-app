@@ -41,11 +41,12 @@ export const usePublicListings = () => {
         category: filters.category || undefined,
         city: filters.city.trim() || undefined,
       });
-      setListings(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
+      setListings(response.content ?? []);
+      setTotalPages(response.totalPages ?? 0);
+      setTotalElements(response.totalElements ?? 0);
     } catch (err) {
       setError(handleApiError(err));
+      setListings([]);
     } finally {
       setIsLoading(false);
     }
@@ -67,13 +68,14 @@ export const usePublicListings = () => {
         });
 
         if (isMounted) {
-          setListings(response.content);
-          setTotalPages(response.totalPages);
-          setTotalElements(response.totalElements);
+          setListings(response.content ?? []);
+          setTotalPages(response.totalPages ?? 0);
+          setTotalElements(response.totalElements ?? 0);
         }
       } catch (err) {
         if (isMounted) {
           setError(handleApiError(err));
+          setListings([]);
         }
       } finally {
         if (isMounted) {
