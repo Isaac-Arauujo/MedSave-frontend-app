@@ -26,6 +26,8 @@ export interface CheckoutSessionResponse {
 export interface UpdateDeliveryRequest {
   deliveryType: DeliveryType;
   addressId?: number;
+  freightPrice?: number;
+  freightEstimate?: string;
 }
 
 export interface UpdatePaymentRequest {

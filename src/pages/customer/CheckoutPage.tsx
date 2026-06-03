@@ -256,11 +256,20 @@ export const CheckoutPage = () => {
       };
     }
 
+    const freightPrice =
+      selectedDeliveryType === 'PICKUP' ? 0 : selectedFreight?.price ?? 0;
+    const freightEstimate =
+      selectedDeliveryType === 'PICKUP'
+        ? 'Retirada na farmácia'
+        : selectedFreight?.estimateLabel;
+
     try {
       await submitDelivery(
         {
           deliveryType: selectedDeliveryType,
           addressId: selectedDeliveryType === 'PICKUP' ? undefined : selectedAddressId ?? undefined,
+          freightPrice,
+          ...(freightEstimate ? { freightEstimate } : {}),
         },
         pickupPerson
       );
@@ -345,6 +354,12 @@ export const CheckoutPage = () => {
       </PageWrapper>
     );
   }
+
+  const reviewFreightPrice =
+    session?.deliveryType === 'PICKUP'
+      ? 0
+      : session?.freightPrice ?? selectedFreight?.price ?? 0;
+  const reviewTotal = cart.subtotal - cart.discount + reviewFreightPrice;
 
   const showCountdown =
     secondsRemaining !== null && secondsRemaining > 0 && secondsRemaining < 5 * 60;
@@ -607,7 +622,7 @@ export const CheckoutPage = () => {
                 <div className="flex justify-between">
                   <dt className="text-on-surface-variant">Frete</dt>
                   <dd className="text-on-surface">
-                    {formatCurrency(selectedFreight?.price ?? session.freightPrice ?? 0)}
+                    {formatCurrency(reviewFreightPrice)}
                     {(selectedFreight?.estimateLabel ?? session.freightEstimate)
                       ? ` · ${selectedFreight?.estimateLabel ?? session.freightEstimate}`
                       : ''}
@@ -640,7 +655,7 @@ export const CheckoutPage = () => {
               )}
               <div className="flex justify-between border-t border-outline-variant pt-3 text-base">
                 <dt className="font-semibold text-on-surface">Total</dt>
-                <dd className="font-headline font-bold text-primary">{formatCurrency(cart.total)}</dd>
+                <dd className="font-headline font-bold text-primary">{formatCurrency(reviewTotal)}</dd>
               </div>
             </dl>
           </div>
