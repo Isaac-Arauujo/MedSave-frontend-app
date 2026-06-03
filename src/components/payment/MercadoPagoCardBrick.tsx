@@ -2,11 +2,35 @@ import { loadMercadoPago } from '@mercadopago/sdk-js';
 import { useEffect, useId, useRef } from 'react';
 import { getPaymentPublicConfig } from '../../api/paymentApi';
 import type { MercadoPagoCardFormData } from '../../types/MercadoPagoTypes';
+
 interface MercadoPagoCardBrickProps {
   amount: number;
   onSubmit: (data: MercadoPagoCardFormData) => Promise<void>;
   onError?: (message: string) => void;
 }
+
+type MercadoPagoInstance = {
+  bricks: () => {
+    create: (
+      brickType: string,
+      containerId: string,
+      settings: Record<string, unknown>
+    ) => Promise<{ unmount?: () => void }>;
+  };
+};
+
+type MercadoPagoConstructor = new (
+  publicKey: string,
+  options?: { locale?: string }
+) => MercadoPagoInstance;
+
+const normalizeAmount = (value: number): number | null => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return null;
+  }
+  return Math.round(amount * 100) / 100;
+};
 
 export const MercadoPagoCardBrick = ({ amount, onSubmit, onError }: MercadoPagoCardBrickProps) => {
   const reactId = useId().replace(/:/g, '');
@@ -22,13 +46,32 @@ export const MercadoPagoCardBrick = ({ amount, onSubmit, onError }: MercadoPagoC
     let cancelled = false;
 
     const init = async () => {
+      const normalizedAmount = normalizeAmount(amount);
+      if (normalizedAmount === null) {
+        onErrorRef.current?.('Valor do pedido inválido para pagamento com cartão.');
+        return;
+      }
+
+      let publicKey: string | undefined;
+
       try {
         const config = await getPaymentPublicConfig();
         const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined;
-        const publicKey = envKey?.trim() || config.publicKey?.trim();
+        publicKey = envKey?.trim() || config.publicKey?.trim();
+
+        console.info('[MP] card form init', {
+          publicKeyPresent: Boolean(publicKey),
+          publicKeyPrefix: publicKey?.slice(0, 7),
+          amount: normalizedAmount,
+          paymentMethod: 'CREDIT_CARD',
+        });
 
         if (!publicKey) {
-          onErrorRef.current?.('Chave pública do Mercado Pago não configurada.');
+          onErrorRef.current?.('Configuração de pagamento indisponível. Tente novamente mais tarde.');
+          console.error('[MP] public key missing', {
+            publicKeyPresent: false,
+            amount: normalizedAmount,
+          });
           return;
         }
 
@@ -39,17 +82,29 @@ export const MercadoPagoCardBrick = ({ amount, onSubmit, onError }: MercadoPagoC
           return;
         }
 
-        const mp = await loadMercadoPago(publicKey, { locale: 'pt-BR' });
+        if (!document.getElementById(containerId)) {
+          throw new Error('Container do formulário de cartão não encontrado.');
+        }
+
+        const MercadoPagoSdk = (await loadMercadoPago()) as MercadoPagoConstructor | null;
+        if (!MercadoPagoSdk) {
+          throw new Error('SDK Mercado Pago indisponível.');
+        }
+
         if (cancelled) {
           return;
         }
 
+        const mp = new MercadoPagoSdk(publicKey, { locale: 'pt-BR' });
         const bricksBuilder = mp.bricks();
         const controller = await bricksBuilder.create('cardPayment', containerId, {
           initialization: {
-            amount,
+            amount: normalizedAmount,
           },
           callbacks: {
+            onReady: () => {
+              console.info('[MP] card form ready', { amount: normalizedAmount });
+            },
             onSubmit: (cardFormData) =>
               new Promise<void>((resolve, reject) => {
                 void onSubmitRef
@@ -65,13 +120,22 @@ export const MercadoPagoCardBrick = ({ amount, onSubmit, onError }: MercadoPagoC
                 typeof (error as { message: unknown }).message === 'string'
                   ? (error as { message: string }).message
                   : 'Erro no formulário de cartão.';
+              console.error('[MP] brick error', { message });
               onErrorRef.current?.(message);
             },
           },
         });
 
         brickControllerRef.current = controller;
-      } catch {
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Não foi possível carregar o formulário de cartão do Mercado Pago.';
+        console.error('[MP] card form init failed', {
+          message,
+          publicKeyPresent: Boolean(publicKey),
+          publicKeyPrefix: publicKey?.slice(0, 7),
+          amount: normalizeAmount(amount),
+        });
         onErrorRef.current?.('Não foi possível carregar o formulário de cartão do Mercado Pago.');
       }
     };

@@ -230,7 +230,7 @@ export const PaymentPage = () => {
     return <PageLoader message="Processando pagamento com cartão..." />;
   }
 
-  const orderTotal = order?.total ?? 0;
+  const orderTotal = Number(order?.total ?? 0);
 
   if (error && !initiation) {
     return <ErrorState message={error} onRetry={() => void handleRetry()} />;
