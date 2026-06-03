@@ -25,6 +25,7 @@ import { ROUTES } from '../../constants/routes';
 import { useAddresses } from '../../hooks/useAddresses';
 import { useCart } from '../../hooks/useCart';
 import { useCheckout } from '../../hooks/useCheckout';
+import { useProfile } from '../../hooks/useProfile';
 import type { CheckoutStep, PaymentMethod, UpdatePickupPersonRequest } from '../../types/CheckoutTypes';
 import type { ParsedOrderCreationError } from '../../types/OrderTypes';
 import type { CreateAddressRequest } from '../../types/AddressTypes';
@@ -86,6 +87,7 @@ const StepIndicator = ({ currentStep }: { currentStep: CheckoutStep }) => {
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, fetchCart } = useCart();
+  const { profile } = useProfile();
   const { addresses, isLoading: isAddressesLoading, createAddress, refetch: refetchAddresses } =
     useAddresses();
   const {
@@ -188,9 +190,18 @@ export const CheckoutPage = () => {
     const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
     const originZip = cart?.pharmacyZipCode ?? '';
     const destinationZip = selectedAddress?.zipCode ?? '';
+    const recipientName = profile
+      ? `${profile.firstName} ${profile.lastName}`.trim()
+      : undefined;
+    const recipientPhone = profile?.mobilePhone ?? profile?.phone;
 
-    void calculateAllDeliveryOptions(originZip, destinationZip);
-  }, [addresses, selectedAddressId, cart?.pharmacyZipCode, calculateAllDeliveryOptions]);
+    void calculateAllDeliveryOptions(originZip, destinationZip, {
+      cart,
+      selectedAddress,
+      recipientName,
+      recipientPhone,
+    });
+  }, [addresses, selectedAddressId, cart, profile, calculateAllDeliveryOptions]);
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {

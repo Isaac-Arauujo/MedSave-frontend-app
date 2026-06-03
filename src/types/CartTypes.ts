@@ -27,6 +27,9 @@ export interface CartResponse {
   pharmacyCity?: string;
   pharmacyState?: string;
   pharmacyZipCode?: string;
+  pharmacyPhone?: string;
+  pharmacyLatitude?: number;
+  pharmacyLongitude?: number;
   items: CartItemResponse[];
   subtotal: number;
   discount: number;

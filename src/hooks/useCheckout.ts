@@ -13,8 +13,31 @@ import type {
 } from '../types/CheckoutTypes';
 import type { OrderResponse } from '../types/OrderTypes';
 import type { FreightResult } from '../types/FreightTypes';
+import type { AddressResponse } from '../types/AddressTypes';
+import type { CartResponse } from '../types/CartTypes';
+import { formatAddressLine, formatCartPharmacyLine } from '../utils/formatAddress';
 import { handleApiError } from '../utils/handleApiError';
 import { parseOrderCreationError } from '../utils/parseOrderCreationError';
+
+export interface FreightContext {
+  cart?: Pick<
+    CartResponse,
+    | 'pharmacyName'
+    | 'pharmacyStreet'
+    | 'pharmacyNumber'
+    | 'pharmacyNeighborhood'
+    | 'pharmacyCity'
+    | 'pharmacyState'
+    | 'pharmacyZipCode'
+    | 'pharmacyPhone'
+    | 'pharmacyLatitude'
+    | 'pharmacyLongitude'
+  >;
+  selectedAddress?: AddressResponse;
+  recipientName?: string;
+  recipientPhone?: string;
+}
+
 const DELIVERY_TYPES: DeliveryType[] = ['PICKUP', 'RAPID', 'SCHEDULED', 'NORMAL'];
 
 const PICKUP_FREIGHT: FreightResult = {
@@ -81,7 +104,7 @@ export const useCheckout = () => {
   }, [session, setSession, setStep, clearSession]);
 
   const calculateAllDeliveryOptions = useCallback(
-    async (originZip: string, destinationZip: string) => {
+    async (originZip: string, destinationZip: string, freightContext?: FreightContext) => {
       const normalizedOrigin = originZip.replace(/\D/g, '');
       const normalizedDestination = destinationZip.replace(/\D/g, '');
 
@@ -90,6 +113,13 @@ export const useCheckout = () => {
         setDeliveryOptions(pickupOnly);
         return pickupOnly;
       }
+
+      const hasCoordinateQuote =
+        freightContext?.cart?.pharmacyLatitude != null
+        && freightContext?.cart?.pharmacyLongitude != null
+        && freightContext?.selectedAddress?.latitude != null
+        && freightContext?.selectedAddress?.longitude != null
+        && Boolean(freightContext.cart?.pharmacyZipCode);
 
       try {
         setIsFreightLoading(true);
@@ -106,11 +136,25 @@ export const useCheckout = () => {
             continue;
           }
 
-          const freight = await checkoutApi.calculateFreight(
-            normalizedOrigin,
-            normalizedDestination,
-            deliveryType
-          );
+          const freight = await checkoutApi.calculateFreight({
+            originZip: normalizedOrigin,
+            destinationZip: normalizedDestination,
+            deliveryType,
+            ...(hasCoordinateQuote && freightContext?.cart && freightContext.selectedAddress
+              ? {
+                  originLatitude: freightContext.cart.pharmacyLatitude,
+                  originLongitude: freightContext.cart.pharmacyLongitude,
+                  originAddress: formatCartPharmacyLine(freightContext.cart),
+                  originContactName: freightContext.cart.pharmacyName,
+                  originPhone: freightContext.cart.pharmacyPhone,
+                  destinationLatitude: freightContext.selectedAddress.latitude,
+                  destinationLongitude: freightContext.selectedAddress.longitude,
+                  destinationAddress: formatAddressLine(freightContext.selectedAddress),
+                  recipientName: freightContext.recipientName,
+                  recipientPhone: freightContext.recipientPhone,
+                }
+              : {}),
+          });
           options.push({ deliveryType, freight });
         }
 

@@ -44,13 +44,27 @@ export const updatePickupPerson = async (
   return response.data;
 };
 
+export interface CalculateFreightParams {
+  originZip: string;
+  destinationZip: string;
+  deliveryType: DeliveryType;
+  originLatitude?: number;
+  originLongitude?: number;
+  originAddress?: string;
+  originContactName?: string;
+  originPhone?: string;
+  destinationLatitude?: number;
+  destinationLongitude?: number;
+  destinationAddress?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+}
+
 export const calculateFreight = async (
-  originZip: string,
-  destinationZip: string,
-  deliveryType: DeliveryType
+  params: CalculateFreightParams
 ): Promise<FreightResult> => {
   const response = await api.get<FreightResult>('/checkout/freight', {
-    params: { originZip, destinationZip, deliveryType },
+    params,
   });
   return response.data;
 };
