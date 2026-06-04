@@ -1,5 +1,9 @@
 import type { DeliveryType } from '../types/CheckoutTypes';
-import type { FreightResult } from '../types/FreightTypes';
+import type {
+  FreightEstimateOptionsRequest,
+  FreightEstimateOptionsResponse,
+  FreightEstimateOption,
+} from '../types/ListingFreightTypes';
 import { api } from './axiosInstance';
 
 export interface FreightEstimateRequest {
@@ -11,9 +15,14 @@ export interface FreightEstimateRequest {
   addressId?: number;
 }
 
-export const estimateFreight = async (
-  request: FreightEstimateRequest
-): Promise<FreightResult> => {
-  const response = await api.post<FreightResult>('/freight/estimate', request);
+export const estimateFreightOptions = async (
+  request: FreightEstimateOptionsRequest
+): Promise<FreightEstimateOptionsResponse> => {
+  const response = await api.post<FreightEstimateOptionsResponse>(
+    '/freight/estimate/options',
+    request
+  );
   return response.data;
 };
+
+export type { FreightEstimateOption };

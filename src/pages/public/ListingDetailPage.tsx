@@ -280,6 +280,7 @@ export const ListingDetailPage = () => {
       <ListingFreightCalculator
         className="mt-6"
         listingId={listing.id}
+        pharmacy={pharmacy}
         deliveryAvailable={pharmacy.deliveryAvailable ?? true}
       />
     </PageWrapper>
