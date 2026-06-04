@@ -179,6 +179,12 @@ export const useListingFreight = (
       setApproximate(response.approximate);
       setOptions(response.options);
       sessionCache.current.set(key, response.options);
+      const lowConfidence = response.options.some(
+        (o) => o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE'
+      );
+      if (lowConfidence) {
+        setShowNumberField(true);
+      }
       setDeliveryError(resolveDeliveryMessage(response.options));
     } catch (err) {
       const message = handleApiError(err);
@@ -257,6 +263,12 @@ function resolveDeliveryMessage(options: FreightEstimateOption[]): string | null
   const allFailed = deliveryTypes.every((o) => !o.available);
   if (!allFailed) {
     return null;
+  }
+  const geocodingMessage = deliveryTypes.find(
+    (o) => o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE' && o.message
+  )?.message;
+  if (geocodingMessage) {
+    return geocodingMessage;
   }
   const firstMessage = deliveryTypes.find((o) => o.message)?.message;
   return firstMessage ?? 'Entrega indisponível para este CEP no momento.';
