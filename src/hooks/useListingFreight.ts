@@ -179,10 +179,12 @@ export const useListingFreight = (
       setApproximate(response.approximate);
       setOptions(response.options);
       sessionCache.current.set(key, response.options);
-      const lowConfidence = response.options.some(
-        (o) => o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE'
+      const needsNumber = response.options.some(
+        (o) =>
+          o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE' ||
+          o.reason === 'DESTINATION_GEOCODING_FAILED'
       );
-      if (lowConfidence) {
+      if (needsNumber) {
         setShowNumberField(true);
       }
       setDeliveryError(resolveDeliveryMessage(response.options));
@@ -265,7 +267,10 @@ function resolveDeliveryMessage(options: FreightEstimateOption[]): string | null
     return null;
   }
   const geocodingMessage = deliveryTypes.find(
-    (o) => o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE' && o.message
+    (o) =>
+      (o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE'
+        || o.reason === 'DESTINATION_GEOCODING_FAILED')
+      && o.message
   )?.message;
   if (geocodingMessage) {
     return geocodingMessage;
