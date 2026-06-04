@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../../constants/productCategories';
 import type { CreateProductRequest, ProductResponse } from '../../types/ProductTypes';
+import { ProductImageUploader } from '../admin/ProductImageUploader';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -19,7 +20,6 @@ const productSchema = z.object({
     'DERMATOLOGICAL',
   ]),
   requiresPrescription: z.boolean(),
-  imagesText: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -37,14 +37,7 @@ const emptyValues: ProductFormData = {
   activeIngredient: '',
   category: 'ANALGESIC',
   requiresPrescription: false,
-  imagesText: '',
 };
-
-const parseImages = (imagesText?: string): string[] =>
-  (imagesText ?? '')
-    .split(',')
-    .map((url) => url.trim())
-    .filter(Boolean);
 
 export const ProductFormModal = ({
   isOpen,
@@ -54,6 +47,7 @@ export const ProductFormModal = ({
   isSubmitting = false,
 }: ProductFormModalProps) => {
   const isEditing = Boolean(initialProduct);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const {
     register,
@@ -76,10 +70,11 @@ export const ProductFormModal = ({
         activeIngredient: initialProduct.activeIngredient ?? '',
         category: initialProduct.category,
         requiresPrescription: initialProduct.requiresPrescription,
-        imagesText: initialProduct.images.join(', '),
       });
+      setImageUrls(initialProduct.images ?? []);
     } else {
       reset(emptyValues);
+      setImageUrls([]);
     }
   }, [isOpen, initialProduct, reset]);
 
@@ -89,7 +84,7 @@ export const ProductFormModal = ({
       activeIngredient: data.activeIngredient?.trim() || undefined,
       category: data.category,
       requiresPrescription: data.requiresPrescription,
-      images: parseImages(data.imagesText),
+      images: imageUrls,
     });
   };
 
@@ -158,18 +153,11 @@ export const ProductFormModal = ({
           <span className="text-sm text-on-surface">Requer receita médica</span>
         </label>
 
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label htmlFor="imagesText" className="text-sm font-medium text-on-surface">
-            URLs das imagens
-          </label>
-          <textarea
-            id="imagesText"
-            rows={3}
-            placeholder="Separe múltiplas URLs por vírgula"
-            className="rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            {...register('imagesText')}
-          />
-        </div>
+        <ProductImageUploader
+          value={imageUrls}
+          onChange={setImageUrls}
+          disabled={isSubmitting}
+        />
       </form>
     </Modal>
   );

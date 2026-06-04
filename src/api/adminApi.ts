@@ -10,6 +10,7 @@ import type { PharmacyResponse, PharmacyStatus } from '../types/PharmacyTypes';
 import type {
   CreateProductRequest,
   ProductCategory,
+  ProductImageUploadResponse,
   ProductResponse,
   UpdateProductRequest,
 } from '../types/ProductTypes';
@@ -124,6 +125,18 @@ export const updateProduct = async (
 
 export const deleteProduct = async (id: number): Promise<void> => {
   await api.delete(`/admin/products/${id}`);
+};
+
+export const uploadProductImages = async (files: File[]): Promise<ProductImageUploadResponse> => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+
+  const response = await api.post<ProductImageUploadResponse>('/admin/products/images', formData, {
+    headers: {
+      'Content-Type': undefined,
+    },
+  });
+  return response.data;
 };
 
 export const getCoupons = async (

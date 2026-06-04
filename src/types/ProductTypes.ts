@@ -31,3 +31,14 @@ export interface UpdateProductRequest {
   images?: string[];
   active?: boolean;
 }
+
+export interface UploadedProductImage {
+  url: string;
+  fileName?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface ProductImageUploadResponse {
+  images: UploadedProductImage[];
+}
