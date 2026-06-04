@@ -54,10 +54,16 @@ export const ListingCard = ({
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <Link to={detailPath}>
-              <h3 className="font-headline font-semibold text-on-surface hover:text-primary">
+            <Link to={detailPath} className="hover:text-primary" aria-label={`Ver detalhes de ${listing.product.name}`}>
+              <h3 className="font-headline font-semibold text-on-surface">
                 {listing.product.name}
               </h3>
+            </Link>
+            <Link
+              to={detailPath}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Ver detalhes
             </Link>
             <p className="text-sm text-on-surface-variant">
               {listing.pharmacy.name} · {listing.pharmacy.city}

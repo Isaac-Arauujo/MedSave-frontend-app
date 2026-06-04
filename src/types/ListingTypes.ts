@@ -1,6 +1,9 @@
 export interface ListingProductSummary {
   id: number;
   name: string;
+  activeIngredient?: string;
+  category?: import('./ProductTypes').ProductCategory;
+  requiresPrescription?: boolean;
   images: string[];
 }
 
@@ -8,6 +11,11 @@ export interface ListingPharmacySummary {
   id: number;
   name: string;
   city: string;
+  state?: string;
+  neighborhood?: string;
+  addressSummary?: string;
+  deliveryAvailable?: boolean;
+  pickupAvailable?: boolean;
 }
 
 export interface ListingResponse {
