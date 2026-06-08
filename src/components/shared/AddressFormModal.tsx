@@ -9,7 +9,9 @@ import type {
 } from '../../types/AddressTypes';
 import {
   hasValidPlaceCoordinates,
+  isCepOnlySearchInput,
   isValidAddressPayload,
+  looksLikeStreetWithoutNumber,
   type ExtractedGooglePlaceAddress,
 } from '../../utils/extractGooglePlaceAddress';
 import { GooglePlacesAddressAutocomplete } from './GooglePlacesAddressAutocomplete';
@@ -62,6 +64,9 @@ const emptyValues: AddressFormData = {
 
 const STRUCTURAL_FIELDS = ['zipCode', 'street', 'number', 'neighborhood', 'city', 'state'] as const;
 
+const SAVE_BLOCKED_HINT =
+  'Para salvar, selecione uma sugestão de endereço completa com número.';
+
 export const AddressFormModal = ({
   isOpen,
   onClose,
@@ -72,6 +77,7 @@ export const AddressFormModal = ({
   const [selectedPlace, setSelectedPlace] = useState<ExtractedGooglePlaceAddress | null>(null);
   const [placeInvalidated, setPlaceInvalidated] = useState(false);
   const [searchResetKey, setSearchResetKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const isEditing = Boolean(initialAddress);
 
   const {
@@ -95,6 +101,7 @@ export const AddressFormModal = ({
 
     setSelectedPlace(null);
     setPlaceInvalidated(false);
+    setSearchQuery('');
     setSearchResetKey((key) => key + 1);
 
     if (initialAddress) {
@@ -136,6 +143,8 @@ export const AddressFormModal = ({
     setValue('street', place.street, { shouldValidate: true });
     if (place.number) {
       setValue('number', place.number, { shouldValidate: true });
+    } else {
+      setValue('number', '', { shouldValidate: true });
     }
     setValue('neighborhood', place.neighborhood, { shouldValidate: true });
     setValue('city', place.city, { shouldValidate: true });
@@ -162,21 +171,48 @@ export const AddressFormModal = ({
     ? hasValidPlaceCoordinates(initialAddress?.latitude, initialAddress?.longitude)
     : payloadValidation.valid && !placeInvalidated;
 
+  const fieldsLocked = !complementOnlyUpdate && !canSave;
+
   const statusMessage = useMemo(() => {
     if (complementOnlyUpdate) {
       return null;
     }
-    if (selectedPlace && payloadValidation.valid) {
+    if (selectedPlace && payloadValidation.valid && !placeInvalidated) {
       return 'Endereço localizado com sucesso.';
     }
-    if (placeInvalidated || !selectedPlace) {
-      return 'Selecione um endereço válido na busca antes de salvar.';
+    if (selectedPlace && payloadValidation.missingGoogleNumber) {
+      return 'Este endereço foi localizado sem número. Para entrega, pesquise novamente incluindo o número.';
     }
     if (selectedPlace && !hasValidPlaceCoordinates(selectedPlace.latitude, selectedPlace.longitude)) {
       return 'Não foi possível obter a localização desse endereço. Tente selecionar outra sugestão.';
     }
-    return 'Selecione um endereço válido na busca antes de salvar.';
-  }, [complementOnlyUpdate, selectedPlace, payloadValidation.valid, placeInvalidated]);
+    if (isCepOnlySearchInput(searchQuery)) {
+      return 'Digite a rua com o número. O CEP sozinho não localiza o endereço para entrega.';
+    }
+    if (looksLikeStreetWithoutNumber(searchQuery) && !selectedPlace) {
+      return 'Selecione uma sugestão com número ou pesquise novamente incluindo o número do endereço.';
+    }
+    if (placeInvalidated || !selectedPlace) {
+      return SAVE_BLOCKED_HINT;
+    }
+    return SAVE_BLOCKED_HINT;
+  }, [
+    complementOnlyUpdate,
+    selectedPlace,
+    payloadValidation.valid,
+    payloadValidation.missingGoogleNumber,
+    placeInvalidated,
+    searchQuery,
+  ]);
+
+  const statusIsSuccess =
+    Boolean(selectedPlace && payloadValidation.valid && !placeInvalidated && !complementOnlyUpdate);
+
+  const statusIsWarning =
+    !statusIsSuccess
+    && (isCepOnlySearchInput(searchQuery)
+      || payloadValidation.missingGoogleNumber
+      || looksLikeStreetWithoutNumber(searchQuery));
 
   const onFormSubmit = handleSubmit(async (data) => {
     const parsed = addressSchema.parse(data);
@@ -190,10 +226,6 @@ export const AddressFormModal = ({
     if (!selectedPlace || !payloadValidation.valid) {
       return;
     }
-
-    const numberSource = selectedPlace.numberFromGoogle && parsed.number === selectedPlace.number
-      ? 'GOOGLE_PLACE'
-      : 'USER';
 
     const payload: CreateAddressRequest = {
       zipCode: parsed.zipCode,
@@ -209,7 +241,7 @@ export const AddressFormModal = ({
       formattedAddress: selectedPlace.formattedAddress,
       geocodingProvider: 'GOOGLE_PLACES',
       coordinatesSource: 'GOOGLE_PLACES',
-      numberSource,
+      numberSource: 'GOOGLE_PLACE',
     };
 
     await onSubmit(payload, parsed.isDefault);
@@ -223,20 +255,25 @@ export const AddressFormModal = ({
       title={isEditing ? 'Editar endereço' : 'Adicionar endereço'}
       size="lg"
       footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            form="address-form"
-            isLoading={isSubmitting}
-            disabled={!canSave}
-          >
-            Salvar endereço
-          </Button>
-        </>
+        <div className="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {!canSave && !complementOnlyUpdate && (
+            <p className="text-xs text-on-surface-variant sm:mr-auto">{SAVE_BLOCKED_HINT}</p>
+          )}
+          <div className="flex gap-2 sm:justify-end">
+            <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="address-form"
+              isLoading={isSubmitting}
+              disabled={!canSave}
+            >
+              Salvar endereço
+            </Button>
+          </div>
+        </div>
       }
     >
       <form id="address-form" className="flex flex-col gap-4" onSubmit={(event) => void onFormSubmit(event)}>
@@ -244,7 +281,8 @@ export const AddressFormModal = ({
           resetKey={searchResetKey}
           disabled={isSubmitting}
           onPlaceSelected={handlePlaceSelected}
-          onInputChange={() => {
+          onInputChange={(value) => {
+            setSearchQuery(value);
             if (selectedPlace) {
               setSelectedPlace(null);
               setPlaceInvalidated(true);
@@ -255,9 +293,11 @@ export const AddressFormModal = ({
         {statusMessage && (
           <p
             className={
-              selectedPlace && payloadValidation.valid && !placeInvalidated
+              statusIsSuccess
                 ? 'text-sm text-primary'
-                : 'text-sm text-on-surface-variant'
+                : statusIsWarning
+                  ? 'text-sm text-[var(--color-warning)]'
+                  : 'text-sm text-on-surface-variant'
             }
             role="status"
           >
@@ -271,9 +311,14 @@ export const AddressFormModal = ({
           </p>
         )}
 
+        <p className="text-xs text-on-surface-variant">
+          Os campos são preenchidos após selecionar uma sugestão válida.
+        </p>
+
         <Input
           label="Rua"
           required
+          readOnly={fieldsLocked}
           error={errors.street?.message}
           {...register('street', { onChange: handleStructuralFieldChange })}
         />
@@ -282,6 +327,7 @@ export const AddressFormModal = ({
           <Input
             label="Número"
             required
+            readOnly={fieldsLocked}
             error={errors.number?.message}
             {...register('number', { onChange: handleStructuralFieldChange })}
           />
@@ -292,12 +338,14 @@ export const AddressFormModal = ({
           <Input
             label="Bairro"
             required
+            readOnly={fieldsLocked}
             error={errors.neighborhood?.message}
             {...register('neighborhood', { onChange: handleStructuralFieldChange })}
           />
           <Input
             label="Cidade"
             required
+            readOnly={fieldsLocked}
             error={errors.city?.message}
             {...register('city', { onChange: handleStructuralFieldChange })}
           />
@@ -309,6 +357,7 @@ export const AddressFormModal = ({
             required
             maxLength={2}
             placeholder="SP"
+            readOnly={fieldsLocked}
             error={errors.state?.message}
             {...register('state', { onChange: handleStructuralFieldChange })}
           />
@@ -317,6 +366,7 @@ export const AddressFormModal = ({
             placeholder="00000-000"
             inputMode="numeric"
             required
+            readOnly={fieldsLocked}
             error={errors.zipCode?.message}
             {...register('zipCode', { onChange: handleStructuralFieldChange })}
           />

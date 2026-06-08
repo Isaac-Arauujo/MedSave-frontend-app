@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { extractGooglePlaceAddress, type ExtractedGooglePlaceAddress } from '../../utils/extractGooglePlaceAddress';
+import {
+  extractGooglePlaceAddress,
+  isCepOnlySearchInput,
+  type ExtractedGooglePlaceAddress,
+} from '../../utils/extractGooglePlaceAddress';
 import { loadGoogleMapsApi } from '../../utils/googleMapsLoader';
 import { Input } from '../ui/Input';
 
 interface GooglePlacesAddressAutocompleteProps {
   onPlaceSelected: (place: ExtractedGooglePlaceAddress) => void;
-  onInputChange?: () => void;
+  onInputChange?: (value: string) => void;
   disabled?: boolean;
   resetKey?: string | number;
 }
@@ -21,6 +25,12 @@ export const GooglePlacesAddressAutocomplete = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [searchValue, setSearchValue] = useState('');
+
+  useEffect(() => {
+    setSearchValue('');
+    setSelectionError(null);
+  }, [resetKey]);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +69,7 @@ export const GooglePlacesAddressAutocomplete = ({
           }
 
           setSelectionError(null);
+          setSearchValue(inputRef.current?.value ?? extracted.formattedAddress);
           onPlaceSelected(extracted);
         });
       } catch {
@@ -83,23 +94,40 @@ export const GooglePlacesAddressAutocomplete = ({
     };
   }, [onPlaceSelected, resetKey]);
 
+  const cepOnlyInput = isCepOnlySearchInput(searchValue);
+
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
       <Input
         ref={inputRef}
-        label="Buscar endereço de entrega"
-        placeholder="Digite rua, número, bairro ou CEP"
+        label="Busque seu endereço com número"
+        placeholder="Ex: Rua Exemplo , 123, São Paulo"
         required
         disabled={disabled || isLoading || Boolean(loadError)}
-        onChange={() => {
+        onChange={(event) => {
+          const value = event.target.value;
+          setSearchValue(value);
           setSelectionError(null);
-          onInputChange?.();
+          onInputChange?.(value);
         }}
         autoComplete="off"
       />
+
       <p className="text-xs text-on-surface-variant">
-        Selecione uma sugestão para validar a localização de entrega.
+        Digite o endereço completo com número e selecione uma sugestão da lista. Não use apenas o CEP.
       </p>
+
+      <div className="space-y-1 text-xs text-on-surface-variant">
+        <p>Exemplo correto: Rua Robert Bird, 137, São Paulo</p>
+        <p>Evite buscar apenas por CEP.</p>
+      </div>
+
+      {cepOnlyInput && (
+        <p className="text-xs text-[var(--color-warning)]" role="alert">
+          Digite a rua com o número. O CEP sozinho não localiza o endereço para entrega.
+        </p>
+      )}
+
       {isLoading && (
         <p className="text-xs text-on-surface-variant">Carregando busca de endereços...</p>
       )}

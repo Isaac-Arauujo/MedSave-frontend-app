@@ -120,18 +120,41 @@ export const extractGooglePlaceAddress = (
   };
 };
 
+export const isCepOnlySearchInput = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length !== 8) {
+    return false;
+  }
+  return /^[\d.\-\s]+$/.test(trimmed);
+};
+
+export const looksLikeStreetWithoutNumber = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (!trimmed || isCepOnlySearchInput(trimmed)) {
+    return false;
+  }
+  const hasLetter = /[A-Za-zÀ-ÿ]/.test(trimmed);
+  const hasNumber = /\d/.test(trimmed);
+  return hasLetter && !hasNumber;
+};
+
 export const isValidAddressPayload = (
   place: ExtractedGooglePlaceAddress | null,
   number: string,
   zipCode: string
-): { valid: boolean; zipWarning: boolean } => {
+): { valid: boolean; zipWarning: boolean; missingGoogleNumber: boolean } => {
   if (!place) {
-    return { valid: false, zipWarning: false };
+    return { valid: false, zipWarning: false, missingGoogleNumber: false };
   }
 
   const normalizedNumber = number.trim();
   const normalizedZip = normalizeZipCode(zipCode);
   const zipWarning = normalizedZip.length > 0 && normalizedZip.length !== 8;
+  const missingGoogleNumber = !place.numberFromGoogle || place.number.trim().length === 0;
 
   const valid =
     place.placeId.length > 0
@@ -139,10 +162,11 @@ export const isValidAddressPayload = (
     && hasValidPlaceCoordinates(place.latitude, place.longitude)
     && isBrazilCountry(place.country)
     && place.street.length > 0
+    && !missingGoogleNumber
     && normalizedNumber.length > 0
     && place.city.length > 0
     && place.state.length === 2
     && normalizedZip.length === 8;
 
-  return { valid, zipWarning };
+  return { valid, zipWarning, missingGoogleNumber };
 };
