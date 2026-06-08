@@ -64,8 +64,15 @@ const emptyValues: AddressFormData = {
 
 const STRUCTURAL_FIELDS = ['zipCode', 'street', 'number', 'neighborhood', 'city', 'state'] as const;
 
-const SAVE_BLOCKED_HINT =
-  'Para salvar, selecione uma sugestão de endereço completa com número.';
+const SAVE_BLOCKED_HINT = 'Selecione uma sugestão completa para salvar.';
+
+type StatusTone = 'success' | 'warning' | 'neutral' | 'error';
+
+interface AddressStatus {
+  main: string | null;
+  sub?: string | null;
+  tone: StatusTone;
+}
 
 export const AddressFormModal = ({
   isOpen,
@@ -141,11 +148,7 @@ export const AddressFormModal = ({
     setSelectedPlace(place);
     setPlaceInvalidated(false);
     setValue('street', place.street, { shouldValidate: true });
-    if (place.number) {
-      setValue('number', place.number, { shouldValidate: true });
-    } else {
-      setValue('number', '', { shouldValidate: true });
-    }
+    setValue('number', place.number || '', { shouldValidate: true });
     setValue('neighborhood', place.neighborhood, { shouldValidate: true });
     setValue('city', place.city, { shouldValidate: true });
     setValue('state', place.state, { shouldValidate: true });
@@ -173,29 +176,55 @@ export const AddressFormModal = ({
 
   const fieldsLocked = !complementOnlyUpdate && !canSave;
 
-  const statusMessage = useMemo(() => {
+  const status = useMemo((): AddressStatus => {
     if (complementOnlyUpdate) {
-      return null;
+      return { main: null, tone: 'neutral' };
     }
+
     if (selectedPlace && payloadValidation.valid && !placeInvalidated) {
-      return 'Endereço localizado com sucesso.';
+      return { main: 'Endereço localizado com sucesso.', tone: 'success' };
     }
+
     if (selectedPlace && payloadValidation.missingGoogleNumber) {
-      return 'Este endereço foi localizado sem número. Para entrega, pesquise novamente incluindo o número.';
+      return {
+        main: 'Selecione uma sugestão com número ou busque novamente incluindo o número.',
+        tone: 'warning',
+      };
     }
+
     if (selectedPlace && !hasValidPlaceCoordinates(selectedPlace.latitude, selectedPlace.longitude)) {
-      return 'Não foi possível obter a localização desse endereço. Tente selecionar outra sugestão.';
+      return {
+        main: 'Não foi possível obter a localização. Selecione outra sugestão.',
+        tone: 'error',
+      };
     }
+
     if (isCepOnlySearchInput(searchQuery)) {
-      return 'Digite a rua com o número. O CEP sozinho não localiza o endereço para entrega.';
+      return {
+        main: 'CEP sozinho não localiza o endereço para entrega. Busque por rua, número e cidade.',
+        tone: 'warning',
+      };
     }
+
     if (looksLikeStreetWithoutNumber(searchQuery) && !selectedPlace) {
-      return 'Selecione uma sugestão com número ou pesquise novamente incluindo o número do endereço.';
+      return {
+        main: 'Selecione uma sugestão com número ou busque novamente incluindo o número.',
+        tone: 'warning',
+      };
     }
-    if (placeInvalidated || !selectedPlace) {
-      return SAVE_BLOCKED_HINT;
+
+    if (placeInvalidated || searchQuery.trim().length > 0) {
+      return {
+        main: 'Selecione uma sugestão da lista para liberar o salvamento.',
+        tone: 'neutral',
+      };
     }
-    return SAVE_BLOCKED_HINT;
+
+    return {
+      main: 'Digite rua, número e cidade. Depois selecione uma sugestão da lista.',
+      sub: 'Não use apenas o CEP.',
+      tone: 'neutral',
+    };
   }, [
     complementOnlyUpdate,
     selectedPlace,
@@ -205,14 +234,12 @@ export const AddressFormModal = ({
     searchQuery,
   ]);
 
-  const statusIsSuccess =
-    Boolean(selectedPlace && payloadValidation.valid && !placeInvalidated && !complementOnlyUpdate);
-
-  const statusIsWarning =
-    !statusIsSuccess
-    && (isCepOnlySearchInput(searchQuery)
-      || payloadValidation.missingGoogleNumber
-      || looksLikeStreetWithoutNumber(searchQuery));
+  const statusClassName = {
+    success: 'text-sm text-primary',
+    warning: 'text-sm text-[var(--color-warning)]',
+    neutral: 'text-sm text-on-surface-variant',
+    error: 'text-sm text-[var(--color-danger)]',
+  }[status.tone];
 
   const onFormSubmit = handleSubmit(async (data) => {
     const parsed = addressSchema.parse(data);
@@ -248,19 +275,27 @@ export const AddressFormModal = ({
     onClose();
   });
 
+  const fieldInputClass = 'min-h-11 text-base sm:min-h-0 sm:text-sm';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? 'Editar endereço' : 'Adicionar endereço'}
       size="lg"
+      layout="sheet"
       footer={
-        <div className="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex w-full flex-col gap-3">
           {!canSave && !complementOnlyUpdate && (
-            <p className="text-xs text-on-surface-variant sm:mr-auto">{SAVE_BLOCKED_HINT}</p>
+            <p className="text-center text-xs text-on-surface-variant sm:text-left">{SAVE_BLOCKED_HINT}</p>
           )}
-          <div className="flex gap-2 sm:justify-end">
-            <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
             <Button
@@ -269,6 +304,7 @@ export const AddressFormModal = ({
               form="address-form"
               isLoading={isSubmitting}
               disabled={!canSave}
+              className="w-full sm:w-auto"
             >
               Salvar endereço
             </Button>
@@ -276,7 +312,11 @@ export const AddressFormModal = ({
         </div>
       }
     >
-      <form id="address-form" className="flex flex-col gap-4" onSubmit={(event) => void onFormSubmit(event)}>
+      <form
+        id="address-form"
+        className="flex flex-col gap-4 overflow-x-hidden"
+        onSubmit={(event) => void onFormSubmit(event)}
+      >
         <GooglePlacesAddressAutocomplete
           resetKey={searchResetKey}
           disabled={isSubmitting}
@@ -290,19 +330,13 @@ export const AddressFormModal = ({
           }}
         />
 
-        {statusMessage && (
-          <p
-            className={
-              statusIsSuccess
-                ? 'text-sm text-primary'
-                : statusIsWarning
-                  ? 'text-sm text-[var(--color-warning)]'
-                  : 'text-sm text-on-surface-variant'
-            }
-            role="status"
-          >
-            {statusMessage}
-          </p>
+        {status.main && (
+          <div role="status" className="space-y-1">
+            <p className={statusClassName}>{status.main}</p>
+            {status.sub && (
+              <p className="text-xs text-on-surface-variant">{status.sub}</p>
+            )}
+          </div>
         )}
 
         {payloadValidation.zipWarning && (
@@ -311,68 +345,79 @@ export const AddressFormModal = ({
           </p>
         )}
 
-        <p className="text-xs text-on-surface-variant">
-          Os campos são preenchidos após selecionar uma sugestão válida.
-        </p>
+        <div className="space-y-3 border-t border-outline-variant pt-4">
+          <p className="text-xs font-medium text-on-surface-variant">
+            Confira os dados preenchidos automaticamente.
+          </p>
 
-        <Input
-          label="Rua"
-          required
-          readOnly={fieldsLocked}
-          error={errors.street?.message}
-          {...register('street', { onChange: handleStructuralFieldChange })}
-        />
+          <Input
+            label="Rua"
+            required
+            readOnly={fieldsLocked}
+            className={fieldInputClass}
+            error={errors.street?.message}
+            {...register('street', { onChange: handleStructuralFieldChange })}
+          />
 
-        <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Número"
             required
             readOnly={fieldsLocked}
+            className={fieldInputClass}
             error={errors.number?.message}
             {...register('number', { onChange: handleStructuralFieldChange })}
           />
-          <Input label="Complemento" error={errors.complement?.message} {...register('complement')} />
-        </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Complemento"
+            className={fieldInputClass}
+            error={errors.complement?.message}
+            {...register('complement')}
+          />
+
           <Input
             label="Bairro"
             required
             readOnly={fieldsLocked}
+            className={fieldInputClass}
             error={errors.neighborhood?.message}
             {...register('neighborhood', { onChange: handleStructuralFieldChange })}
           />
+
           <Input
             label="Cidade"
             required
             readOnly={fieldsLocked}
+            className={fieldInputClass}
             error={errors.city?.message}
             {...register('city', { onChange: handleStructuralFieldChange })}
           />
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input
+              label="UF"
+              required
+              maxLength={2}
+              placeholder="SP"
+              readOnly={fieldsLocked}
+              className={fieldInputClass}
+              error={errors.state?.message}
+              {...register('state', { onChange: handleStructuralFieldChange })}
+            />
+            <Input
+              label="CEP"
+              placeholder="00000-000"
+              inputMode="numeric"
+              required
+              readOnly={fieldsLocked}
+              className={fieldInputClass}
+              error={errors.zipCode?.message}
+              {...register('zipCode', { onChange: handleStructuralFieldChange })}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="UF"
-            required
-            maxLength={2}
-            placeholder="SP"
-            readOnly={fieldsLocked}
-            error={errors.state?.message}
-            {...register('state', { onChange: handleStructuralFieldChange })}
-          />
-          <Input
-            label="CEP"
-            placeholder="00000-000"
-            inputMode="numeric"
-            required
-            readOnly={fieldsLocked}
-            error={errors.zipCode?.message}
-            {...register('zipCode', { onChange: handleStructuralFieldChange })}
-          />
-        </div>
-
-        <label className="flex items-center gap-2 text-sm text-on-surface">
+        <label className="flex items-center gap-2 pb-2 text-sm text-on-surface">
           <input
             type="checkbox"
             className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary"

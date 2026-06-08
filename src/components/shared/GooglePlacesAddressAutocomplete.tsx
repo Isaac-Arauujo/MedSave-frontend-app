@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import clsx from 'clsx';
 import {
   extractGooglePlaceAddress,
-  isCepOnlySearchInput,
   type ExtractedGooglePlaceAddress,
 } from '../../utils/extractGooglePlaceAddress';
 import { loadGoogleMapsApi } from '../../utils/googleMapsLoader';
@@ -25,10 +25,8 @@ export const GooglePlacesAddressAutocomplete = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectionError, setSelectionError] = useState<string | null>(null);
-  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
-    setSearchValue('');
     setSelectionError(null);
   }, [resetKey]);
 
@@ -58,18 +56,17 @@ export const GooglePlacesAddressAutocomplete = ({
         autocompleteRef.current.addListener('place_changed', () => {
           const place = autocompleteRef.current?.getPlace();
           if (!place) {
-            setSelectionError('Não foi possível obter a localização desse endereço. Tente selecionar outra sugestão.');
+            setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
             return;
           }
 
           const extracted = extractGooglePlaceAddress(place);
           if (!extracted) {
-            setSelectionError('Não foi possível obter a localização desse endereço. Tente selecionar outra sugestão.');
+            setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
             return;
           }
 
           setSelectionError(null);
-          setSearchValue(inputRef.current?.value ?? extracted.formattedAddress);
           onPlaceSelected(extracted);
         });
       } catch {
@@ -94,39 +91,24 @@ export const GooglePlacesAddressAutocomplete = ({
     };
   }, [onPlaceSelected, resetKey]);
 
-  const cepOnlyInput = isCepOnlySearchInput(searchValue);
-
   return (
     <div className="flex flex-col gap-2">
       <Input
         ref={inputRef}
         label="Busque seu endereço com número"
-        placeholder="Ex: Rua Exemplo , 123, São Paulo"
+        placeholder="Ex: Rua Exemplo, 123, São Paulo"
         required
         disabled={disabled || isLoading || Boolean(loadError)}
         onChange={(event) => {
-          const value = event.target.value;
-          setSearchValue(value);
           setSelectionError(null);
-          onInputChange?.(value);
+          onInputChange?.(event.target.value);
         }}
         autoComplete="off"
+        className={clsx(
+          'min-h-12 text-base sm:min-h-0 sm:text-sm',
+          'touch-manipulation'
+        )}
       />
-
-      <p className="text-xs text-on-surface-variant">
-        Digite o endereço completo com número e selecione uma sugestão da lista. Não use apenas o CEP.
-      </p>
-
-      <div className="space-y-1 text-xs text-on-surface-variant">
-        <p>Exemplo correto: Rua Robert Bird, 137, São Paulo</p>
-        <p>Evite buscar apenas por CEP.</p>
-      </div>
-
-      {cepOnlyInput && (
-        <p className="text-xs text-[var(--color-warning)]" role="alert">
-          Digite a rua com o número. O CEP sozinho não localiza o endereço para entrega.
-        </p>
-      )}
 
       {isLoading && (
         <p className="text-xs text-on-surface-variant">Carregando busca de endereços...</p>

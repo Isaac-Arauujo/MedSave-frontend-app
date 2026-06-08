@@ -9,6 +9,7 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  layout?: 'default' | 'sheet';
 }
 
 const sizeClasses: Record<NonNullable<ModalProps['size']>, string> = {
@@ -24,8 +25,10 @@ export const Modal = ({
   children,
   footer,
   size = 'md',
+  layout = 'default',
 }: ModalProps) => {
   const titleId = useId();
+  const isSheet = layout === 'sheet';
 
   useEffect(() => {
     if (!isOpen) {
@@ -53,7 +56,10 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={clsx(
+        'fixed inset-0 z-50 flex',
+        isSheet ? 'items-end justify-center sm:items-center sm:p-4' : 'items-center justify-center p-4'
+      )}
       role="presentation"
       onClick={onClose}
     >
@@ -63,23 +69,53 @@ export const Modal = ({
         aria-modal="true"
         aria-labelledby={titleId}
         className={clsx(
-          'relative z-10 w-full rounded-2xl bg-surface-container-lowest p-6 shadow-xl',
+          'relative z-10 flex w-full flex-col bg-surface-container-lowest shadow-xl',
+          isSheet
+            ? 'h-[100dvh] max-h-[100dvh] rounded-t-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:p-6'
+            : 'rounded-2xl p-6',
           sizeClasses[size]
         )}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 id={titleId} className="font-headline text-xl font-bold text-on-surface">
+        <div
+          className={clsx(
+            'flex shrink-0 items-start justify-between gap-4',
+            isSheet
+              ? 'border-b border-outline-variant px-4 py-3 sm:mb-4 sm:border-0 sm:p-0'
+              : 'mb-4'
+          )}
+        >
+          <h2 id={titleId} className="font-headline text-lg font-bold text-on-surface sm:text-xl">
             {title}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar modal">
-            <span className="material-symbols-outlined" aria-hidden="true">
+            <span className="material-symbols-outlined text-2xl" aria-hidden="true">
               close
             </span>
           </Button>
         </div>
-        <div className="text-on-surface">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+
+        <div
+          className={clsx(
+            'min-h-0 flex-1 text-on-surface',
+            isSheet ? 'overflow-y-auto overscroll-contain px-4 py-4 sm:overflow-visible sm:px-0 sm:py-0' : ''
+          )}
+        >
+          {children}
+        </div>
+
+        {footer && (
+          <div
+            className={clsx(
+              'shrink-0',
+              isSheet
+                ? 'border-t border-outline-variant px-4 py-3 sm:mt-6 sm:border-0 sm:p-0'
+                : 'mt-6 flex justify-end gap-3'
+            )}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
