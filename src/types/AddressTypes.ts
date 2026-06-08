@@ -9,6 +9,11 @@ export interface AddressResponse {
   state: string;
   latitude?: number;
   longitude?: number;
+  googlePlaceId?: string;
+  formattedAddress?: string;
+  geocodingProvider?: string;
+  coordinatesSource?: string;
+  numberSource?: string;
   isDefault: boolean;
 }
 
@@ -20,6 +25,13 @@ export interface CreateAddressRequest {
   neighborhood: string;
   city: string;
   state: string;
+  latitude: number;
+  longitude: number;
+  googlePlaceId: string;
+  formattedAddress: string;
+  geocodingProvider: 'GOOGLE_PLACES';
+  coordinatesSource: 'GOOGLE_PLACES';
+  numberSource: 'GOOGLE_PLACE' | 'USER';
 }
 
 export interface UpdateAddressRequest {
@@ -30,4 +42,12 @@ export interface UpdateAddressRequest {
   neighborhood?: string;
   city?: string;
   state?: string;
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string;
+  formattedAddress?: string;
+  geocodingProvider?: 'GOOGLE_PLACES';
+  coordinatesSource?: 'GOOGLE_PLACES';
+  numberSource?: 'GOOGLE_PLACE' | 'USER';
+  isDefault?: boolean;
 }

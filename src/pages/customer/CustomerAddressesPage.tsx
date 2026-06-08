@@ -8,7 +8,11 @@ import { ErrorState } from '../../components/ui/ErrorState';
 import { Modal } from '../../components/ui/Modal';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { useAddresses } from '../../hooks/useAddresses';
-import type { AddressResponse, CreateAddressRequest } from '../../types/AddressTypes';
+import type {
+  AddressResponse,
+  CreateAddressRequest,
+  UpdateAddressRequest,
+} from '../../types/AddressTypes';
 import { formatAddressLine } from '../../utils/formatAddress';
 
 export const CustomerAddressesPage = () => {
@@ -44,7 +48,10 @@ export const CustomerAddressesPage = () => {
     setEditingAddress(undefined);
   };
 
-  const handleFormSubmit = async (data: CreateAddressRequest, setAsDefault: boolean) => {
+  const handleFormSubmit = async (
+    data: CreateAddressRequest | UpdateAddressRequest,
+    setAsDefault: boolean
+  ) => {
     try {
       setIsSubmitting(true);
 

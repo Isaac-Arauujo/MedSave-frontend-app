@@ -269,7 +269,9 @@ function resolveDeliveryMessage(options: FreightEstimateOption[]): string | null
   const geocodingMessage = deliveryTypes.find(
     (o) =>
       (o.reason === 'DESTINATION_GEOCODING_LOW_CONFIDENCE'
-        || o.reason === 'DESTINATION_GEOCODING_FAILED')
+        || o.reason === 'DESTINATION_GEOCODING_FAILED'
+        || o.reason === 'CEP_ONLY_NO_COORDINATES'
+        || o.reason === 'DESTINATION_COORDINATES_INVALID')
       && o.message
   )?.message;
   if (geocodingMessage) {

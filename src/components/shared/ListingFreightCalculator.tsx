@@ -68,6 +68,12 @@ export const ListingFreightCalculator = ({
         Consultar formas de entrega
       </h3>
 
+      {!form.selectedAddressId && (
+        <p className="mt-2 text-xs text-on-surface-variant">
+          Valor exato no checkout após informar o endereço de entrega.
+        </p>
+      )}
+
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="flex-1">
           <span className="sr-only">CEP</span>

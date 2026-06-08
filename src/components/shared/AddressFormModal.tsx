@@ -1,9 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import type { AddressResponse, CreateAddressRequest } from '../../types/AddressTypes';
-import { fetchViaCep } from '../../utils/fetchViaCep';
+import type {
+  AddressResponse,
+  CreateAddressRequest,
+  UpdateAddressRequest,
+} from '../../types/AddressTypes';
+import {
+  hasValidPlaceCoordinates,
+  isValidAddressPayload,
+  type ExtractedGooglePlaceAddress,
+} from '../../utils/extractGooglePlaceAddress';
+import { GooglePlacesAddressAutocomplete } from './GooglePlacesAddressAutocomplete';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -33,7 +42,10 @@ interface AddressFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialAddress?: AddressResponse;
-  onSubmit: (data: CreateAddressRequest, setAsDefault: boolean) => Promise<void>;
+  onSubmit: (
+    data: CreateAddressRequest | UpdateAddressRequest,
+    setAsDefault: boolean
+  ) => Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -48,6 +60,8 @@ const emptyValues: AddressFormData = {
   isDefault: false,
 };
 
+const STRUCTURAL_FIELDS = ['zipCode', 'street', 'number', 'neighborhood', 'city', 'state'] as const;
+
 export const AddressFormModal = ({
   isOpen,
   onClose,
@@ -55,8 +69,9 @@ export const AddressFormModal = ({
   onSubmit,
   isSubmitting = false,
 }: AddressFormModalProps) => {
-  const [cepLoading, setCepLoading] = useState(false);
-  const [cepError, setCepError] = useState<string | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<ExtractedGooglePlaceAddress | null>(null);
+  const [placeInvalidated, setPlaceInvalidated] = useState(false);
+  const [searchResetKey, setSearchResetKey] = useState(0);
   const isEditing = Boolean(initialAddress);
 
   const {
@@ -71,10 +86,16 @@ export const AddressFormModal = ({
     defaultValues: emptyValues,
   });
 
+  const watchedValues = watch();
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
+
+    setSelectedPlace(null);
+    setPlaceInvalidated(false);
+    setSearchResetKey((key) => key + 1);
 
     if (initialAddress) {
       reset({
@@ -91,49 +112,109 @@ export const AddressFormModal = ({
     }
 
     reset(emptyValues);
-    setCepError(null);
   }, [isOpen, initialAddress, reset]);
 
-  const handleZipBlur = async () => {
-    const zipCode = watch('zipCode');
-
-    if (zipCode.replace(/\D/g, '').length !== 8) {
-      return;
+  const structuralFieldsChanged = useMemo(() => {
+    if (!initialAddress) {
+      return true;
     }
 
-    try {
-      setCepLoading(true);
-      setCepError(null);
-      const data = await fetchViaCep(zipCode);
-
-      if (!data) {
-        setCepError('CEP não encontrado.');
-        return;
+    return STRUCTURAL_FIELDS.some((field) => {
+      if (field === 'zipCode') {
+        return (watchedValues.zipCode ?? '').replace(/\D/g, '')
+          !== (initialAddress.zipCode ?? '').replace(/\D/g, '');
       }
+      return (watchedValues[field] ?? '').trim() !== (initialAddress[field] ?? '').trim();
+    });
+  }, [initialAddress, watchedValues]);
 
-      setValue('street', data.logradouro || watch('street'));
-      setValue('neighborhood', data.bairro || watch('neighborhood'));
-      setValue('city', data.localidade || watch('city'));
-      setValue('state', data.uf || watch('state'));
+  const complementOnlyUpdate = isEditing && !structuralFieldsChanged;
 
-      if (data.complemento) {
-        setValue('complement', data.complemento);
-      }
-    } catch {
-      setCepError('Erro ao buscar CEP. Tente novamente.');
-    } finally {
-      setCepLoading(false);
+  const handlePlaceSelected = (place: ExtractedGooglePlaceAddress) => {
+    setSelectedPlace(place);
+    setPlaceInvalidated(false);
+    setValue('street', place.street, { shouldValidate: true });
+    if (place.number) {
+      setValue('number', place.number, { shouldValidate: true });
+    }
+    setValue('neighborhood', place.neighborhood, { shouldValidate: true });
+    setValue('city', place.city, { shouldValidate: true });
+    setValue('state', place.state, { shouldValidate: true });
+    if (place.zipCode) {
+      setValue('zipCode', place.zipCode, { shouldValidate: true });
     }
   };
 
+  const handleStructuralFieldChange = () => {
+    if (selectedPlace) {
+      setSelectedPlace(null);
+      setPlaceInvalidated(true);
+    }
+  };
+
+  const payloadValidation = isValidAddressPayload(
+    selectedPlace,
+    watchedValues.number ?? '',
+    watchedValues.zipCode ?? ''
+  );
+
+  const canSave = complementOnlyUpdate
+    ? hasValidPlaceCoordinates(initialAddress?.latitude, initialAddress?.longitude)
+    : payloadValidation.valid && !placeInvalidated;
+
+  const statusMessage = useMemo(() => {
+    if (complementOnlyUpdate) {
+      return null;
+    }
+    if (selectedPlace && payloadValidation.valid) {
+      return 'Endereço localizado com sucesso.';
+    }
+    if (placeInvalidated || !selectedPlace) {
+      return 'Selecione um endereço válido na busca antes de salvar.';
+    }
+    if (selectedPlace && !hasValidPlaceCoordinates(selectedPlace.latitude, selectedPlace.longitude)) {
+      return 'Não foi possível obter a localização desse endereço. Tente selecionar outra sugestão.';
+    }
+    return 'Selecione um endereço válido na busca antes de salvar.';
+  }, [complementOnlyUpdate, selectedPlace, payloadValidation.valid, placeInvalidated]);
+
   const onFormSubmit = handleSubmit(async (data) => {
     const parsed = addressSchema.parse(data);
-    const { isDefault, ...payload } = parsed;
-    await onSubmit(payload, isDefault);
+
+    if (complementOnlyUpdate) {
+      await onSubmit({ complement: parsed.complement || undefined }, parsed.isDefault);
+      onClose();
+      return;
+    }
+
+    if (!selectedPlace || !payloadValidation.valid) {
+      return;
+    }
+
+    const numberSource = selectedPlace.numberFromGoogle && parsed.number === selectedPlace.number
+      ? 'GOOGLE_PLACE'
+      : 'USER';
+
+    const payload: CreateAddressRequest = {
+      zipCode: parsed.zipCode,
+      street: parsed.street,
+      number: parsed.number,
+      complement: parsed.complement || undefined,
+      neighborhood: parsed.neighborhood,
+      city: parsed.city,
+      state: parsed.state,
+      latitude: selectedPlace.latitude,
+      longitude: selectedPlace.longitude,
+      googlePlaceId: selectedPlace.placeId,
+      formattedAddress: selectedPlace.formattedAddress,
+      geocodingProvider: 'GOOGLE_PLACES',
+      coordinatesSource: 'GOOGLE_PLACES',
+      numberSource,
+    };
+
+    await onSubmit(payload, parsed.isDefault);
     onClose();
   });
-
-  const zipCodeRegister = register('zipCode');
 
   return (
     <Modal
@@ -151,56 +232,95 @@ export const AddressFormModal = ({
             type="submit"
             form="address-form"
             isLoading={isSubmitting}
+            disabled={!canSave}
           >
-            {isEditing ? 'Salvar alterações' : 'Adicionar endereço'}
+            Salvar endereço
           </Button>
         </>
       }
     >
       <form id="address-form" className="flex flex-col gap-4" onSubmit={(event) => void onFormSubmit(event)}>
+        <GooglePlacesAddressAutocomplete
+          resetKey={searchResetKey}
+          disabled={isSubmitting}
+          onPlaceSelected={handlePlaceSelected}
+          onInputChange={() => {
+            if (selectedPlace) {
+              setSelectedPlace(null);
+              setPlaceInvalidated(true);
+            }
+          }}
+        />
+
+        {statusMessage && (
+          <p
+            className={
+              selectedPlace && payloadValidation.valid && !placeInvalidated
+                ? 'text-sm text-primary'
+                : 'text-sm text-on-surface-variant'
+            }
+            role="status"
+          >
+            {statusMessage}
+          </p>
+        )}
+
+        {payloadValidation.zipWarning && (
+          <p className="text-sm text-[var(--color-warning)]" role="alert">
+            Confira o CEP antes de salvar.
+          </p>
+        )}
+
+        <Input
+          label="Rua"
+          required
+          error={errors.street?.message}
+          {...register('street', { onChange: handleStructuralFieldChange })}
+        />
+
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="CEP"
-            placeholder="00000-000"
-            inputMode="numeric"
-            required
-            error={errors.zipCode?.message ?? cepError ?? undefined}
-            disabled={cepLoading}
-            {...zipCodeRegister}
-            onBlur={(event) => {
-              zipCodeRegister.onBlur(event);
-              void handleZipBlur();
-            }}
-          />
           <Input
             label="Número"
             required
             error={errors.number?.message}
-            {...register('number')}
+            {...register('number', { onChange: handleStructuralFieldChange })}
           />
+          <Input label="Complemento" error={errors.complement?.message} {...register('complement')} />
         </div>
-
-        <Input label="Rua" required error={errors.street?.message} {...register('street')} />
-        <Input label="Complemento" error={errors.complement?.message} {...register('complement')} />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Bairro"
             required
             error={errors.neighborhood?.message}
-            {...register('neighborhood')}
+            {...register('neighborhood', { onChange: handleStructuralFieldChange })}
           />
-          <Input label="Cidade" required error={errors.city?.message} {...register('city')} />
+          <Input
+            label="Cidade"
+            required
+            error={errors.city?.message}
+            {...register('city', { onChange: handleStructuralFieldChange })}
+          />
         </div>
 
-        <Input
-          label="UF"
-          required
-          maxLength={2}
-          placeholder="SP"
-          error={errors.state?.message}
-          {...register('state')}
-        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="UF"
+            required
+            maxLength={2}
+            placeholder="SP"
+            error={errors.state?.message}
+            {...register('state', { onChange: handleStructuralFieldChange })}
+          />
+          <Input
+            label="CEP"
+            placeholder="00000-000"
+            inputMode="numeric"
+            required
+            error={errors.zipCode?.message}
+            {...register('zipCode', { onChange: handleStructuralFieldChange })}
+          />
+        </div>
 
         <label className="flex items-center gap-2 text-sm text-on-surface">
           <input
@@ -210,10 +330,6 @@ export const AddressFormModal = ({
           />
           Definir como endereço padrão
         </label>
-
-        {cepLoading && (
-          <p className="text-sm text-on-surface-variant">Buscando endereço pelo CEP...</p>
-        )}
       </form>
     </Modal>
   );
