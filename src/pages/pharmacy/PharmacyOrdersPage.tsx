@@ -273,6 +273,11 @@ export const PharmacyOrdersPage = () => {
                         Motivo: {order.cancellationReason}
                       </p>
                     )}
+                    {order.status === 'CANCELLED' && order.refundStatusLabel && (
+                      <p className="mt-1 max-w-xs text-xs text-on-surface-variant">
+                        Estorno: {order.refundStatusLabel}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3">{renderOrderActions(order.id, order.status, order.deliveryType)}</td>
                 </tr>

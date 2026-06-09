@@ -106,9 +106,10 @@ export const usePharmacyOrders = () => {
     async (orderId: number, data: CancelPharmacyOrderRequest) => {
       try {
         setIsSubmitting(true);
-        await pharmacyApi.cancelOrder(orderId, data);
-        toast.success('Pedido cancelado com sucesso. O cliente será notificado.');
+        const response = await pharmacyApi.cancelOrder(orderId, data);
+        toast.success(response.refundMessage);
         await loadOrders();
+        return response;
       } catch (err) {
         const message = handleApiError(err);
         toast.error(message);

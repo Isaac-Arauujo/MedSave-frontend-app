@@ -16,6 +16,15 @@ export interface OrderStatusTransitionRequest {
   reason?: string;
 }
 
+export type RefundStatus = 'NOT_REQUIRED' | 'PENDING' | 'REFUNDED' | 'FAILED';
+
+export interface CancelPharmacyOrderResponse {
+  orderId: number;
+  status: OrderStatus;
+  refundStatus: RefundStatus;
+  refundMessage: string;
+}
+
 export interface CancelPharmacyOrderRequest {
   reason: string;
 }

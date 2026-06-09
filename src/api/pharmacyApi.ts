@@ -5,6 +5,7 @@ import type {
   GetPickupOrdersParams,
   OrderStatusTransitionRequest,
   CancelPharmacyOrderRequest,
+  CancelPharmacyOrderResponse,
   PickupOrderResponse,
   UpdatePharmacyDeliveryRequest,
 } from '../types/PharmacyOrderTypes';
@@ -73,8 +74,12 @@ export const updateOrderStatus = async (
 export const cancelOrder = async (
   orderId: number,
   data: CancelPharmacyOrderRequest
-): Promise<void> => {
-  await api.post(`/pharmacy/orders/${orderId}/cancel`, data);
+): Promise<CancelPharmacyOrderResponse> => {
+  const response = await api.post<CancelPharmacyOrderResponse>(
+    `/pharmacy/orders/${orderId}/cancel`,
+    data
+  );
+  return response.data;
 };
 
 export const updateDelivery = async (

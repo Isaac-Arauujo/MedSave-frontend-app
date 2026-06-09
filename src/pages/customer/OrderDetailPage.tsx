@@ -179,8 +179,16 @@ export const OrderDetailPage = () => {
               Cancelado em {formatDateTime(order.canceledAt)}
             </p>
           )}
-          {order.refundNotice && (
-            <p className="mt-3 text-sm text-on-surface-variant">{order.refundNotice}</p>
+          {(payment?.refundStatusLabel || order.refundNotice) && (
+            <p className="mt-3 text-sm text-on-surface-variant">
+              <span className="font-medium">Estorno:</span>{' '}
+              {payment?.refundStatusLabel ?? order.refundNotice}
+            </p>
+          )}
+          {!payment?.refundStatusLabel && !order.refundNotice && payment && (
+            <p className="mt-3 text-sm text-on-surface-variant">
+              <span className="font-medium">Estorno:</span> Não necessário
+            </p>
           )}
         </section>
       )}

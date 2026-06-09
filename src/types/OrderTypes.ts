@@ -62,12 +62,16 @@ export interface PharmacyBasicResponse {
   state: string;
 }
 
+export type RefundStatus = 'NOT_REQUIRED' | 'PENDING' | 'REFUNDED' | 'FAILED';
+
 export interface PaymentStatusResponse {
   method: PaymentMethod;
   status: PaymentStatus;
   paidAt?: string;
   pixPayload?: string;
   paymentUrl?: string;
+  refundStatus?: RefundStatus;
+  refundStatusLabel?: string;
 }
 
 export interface PickupInfoResponse {
@@ -112,6 +116,8 @@ export interface OrderSummaryResponse {
   deliveryType: DeliveryType;
   cancellationReason?: string;
   canceledAt?: string;
+  refundStatus?: RefundStatus;
+  refundStatusLabel?: string;
 }
 
 export type OrderListFilter = 'ALL' | 'ACTIVE' | 'DELIVERED' | 'CANCELLED';
