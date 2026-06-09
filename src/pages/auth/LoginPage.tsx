@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { Button } from '../../components/ui/Button';
@@ -16,6 +16,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect');
   const { login, isLoading, error } = useAuth();
   const {
     register,
@@ -30,7 +32,7 @@ export const LoginPage = () => {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    await login(data);
+    await login(data, redirectPath);
   });
 
   return (

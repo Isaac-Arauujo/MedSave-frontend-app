@@ -9,6 +9,9 @@ import { getDashboardPath } from '../utils/getDashboardPath';
 import { handleApiError } from '../utils/handleApiError';
 import { normalizeRole } from '../utils/normalizeRole';
 
+const isSafeRedirectPath = (path: string | null): path is string =>
+  Boolean(path && path.startsWith('/') && !path.startsWith('//'));
+
 export const useAuth = () => {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -17,7 +20,7 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   const login = useCallback(
-    async (data: LoginRequest) => {
+    async (data: LoginRequest, redirectPath?: string | null) => {
       try {
         setIsLoading(true);
         setError(null);
@@ -31,6 +34,12 @@ export const useAuth = () => {
         }
 
         setAuth(response.token, role, response.userId);
+
+        if (isSafeRedirectPath(redirectPath ?? null)) {
+          navigate(redirectPath, { replace: true });
+          return;
+        }
+
         navigate(getDashboardPath(role), { replace: true });
       } catch (err) {
         setError(handleApiError(err));

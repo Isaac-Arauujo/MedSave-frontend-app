@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -24,6 +25,7 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const [isSuccess, setIsSuccess] = useState(false);
   const { resetPassword, isLoading, error } = usePassword();
 
   const {
@@ -43,13 +45,35 @@ export const ResetPasswordPage = () => {
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    await resetPassword(token, data.newPassword);
+    const success = await resetPassword(token, data.newPassword);
+    if (success) {
+      setIsSuccess(true);
+    }
   });
+
+  if (isSuccess) {
+    return (
+      <PageWrapper
+        title="Senha alterada"
+        description="Sua senha foi alterada com sucesso."
+      >
+        <div className="mx-auto flex w-full max-w-md flex-col gap-4 text-center">
+          <p className="text-on-surface">Sua senha foi alterada com sucesso.</p>
+          <Link
+            to={ROUTES.LOGIN}
+            className="inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-base font-semibold text-on-primary hover:bg-[var(--color-primary-dark)]"
+          >
+            Ir para o login
+          </Link>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper
-      title="Redefinir senha"
-      description="Digite sua nova senha abaixo."
+      title="Criar nova senha"
+      description="Digite sua nova senha para concluir a redefinição."
     >
       <div className="mx-auto w-full max-w-md">
         <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
@@ -77,7 +101,7 @@ export const ResetPasswordPage = () => {
           )}
 
           <Button type="submit" variant="primary" size="lg" isLoading={isLoading} className="w-full">
-            Redefinir senha
+            Confirmar nova senha
           </Button>
 
           <Link
