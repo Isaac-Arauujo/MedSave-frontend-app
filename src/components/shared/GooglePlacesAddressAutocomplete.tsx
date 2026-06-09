@@ -34,6 +34,7 @@ export const GooglePlacesAddressAutocomplete = ({
   const isSelectingPlaceRef = useRef(false);
   const onPlaceSelectedRef = useRef(onPlaceSelected);
   const onUserInputChangeRef = useRef(onUserInputChange);
+  const lastSelectedInputValueRef = useRef<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -41,14 +42,36 @@ export const GooglePlacesAddressAutocomplete = ({
   onPlaceSelectedRef.current = onPlaceSelected;
   onUserInputChangeRef.current = onUserInputChange;
 
-  const finishProgrammaticSelection = () => {
+  const finishProgrammaticSelection = (selectedInputValue?: string) => {
+    if (selectedInputValue) {
+      lastSelectedInputValueRef.current = selectedInputValue;
+    }
     window.setTimeout(() => {
       isSelectingPlaceRef.current = false;
-    }, 100);
+    }, 300);
   };
 
   useEffect(() => {
+    const markPacSelectionStart = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('.pac-container')) {
+        isSelectingPlaceRef.current = true;
+        logGooglePlaces('pac suggestion interaction started');
+      }
+    };
+
+    document.addEventListener('mousedown', markPacSelectionStart, true);
+    document.addEventListener('touchstart', markPacSelectionStart, true);
+
+    return () => {
+      document.removeEventListener('mousedown', markPacSelectionStart, true);
+      document.removeEventListener('touchstart', markPacSelectionStart, true);
+    };
+  }, []);
+
+  useEffect(() => {
     setSelectionError(null);
+    lastSelectedInputValueRef.current = null;
   }, [resetKey]);
 
   useEffect(() => {
@@ -92,6 +115,7 @@ export const GooglePlacesAddressAutocomplete = ({
               const resolvedPlace = await resolveGooglePlaceResult(initialPlace);
               if (!resolvedPlace) {
                 setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
+                finishProgrammaticSelection();
                 return;
               }
 
@@ -102,6 +126,7 @@ export const GooglePlacesAddressAutocomplete = ({
 
               if (!extracted) {
                 setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
+                finishProgrammaticSelection();
                 return;
               }
 
@@ -109,9 +134,11 @@ export const GooglePlacesAddressAutocomplete = ({
               onPlaceSelectedRef.current(extracted);
               logGooglePlaces('form populated from place');
               logGooglePlaces('selectedPlace valid=true');
+              finishProgrammaticSelection(
+                resolvedPlace.formatted_address ?? inputRef.current?.value ?? undefined
+              );
             } catch {
               setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
-            } finally {
               finishProgrammaticSelection();
             }
           })();
@@ -151,6 +178,14 @@ export const GooglePlacesAddressAutocomplete = ({
 
           if (isSelectingPlaceRef.current) {
             logGooglePlaces('input change ignored because selection in progress');
+            return;
+          }
+
+          if (
+            lastSelectedInputValueRef.current &&
+            value.trim() === lastSelectedInputValueRef.current.trim()
+          ) {
+            logGooglePlaces('input change ignored because value matches selected place');
             return;
           }
 
