@@ -163,6 +163,28 @@ export const OrderDetailPage = () => {
         </div>
       </section>
 
+      {order.status === 'CANCELLED' && (
+        <section
+          className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-6"
+          role="status"
+        >
+          <h3 className="mb-2 font-headline text-lg font-bold text-on-surface">Pedido cancelado</h3>
+          {order.cancellationReason && (
+            <p className="text-sm text-on-surface">
+              <span className="font-medium">Motivo:</span> {order.cancellationReason}
+            </p>
+          )}
+          {order.canceledAt && (
+            <p className="mt-2 text-sm text-on-surface-variant">
+              Cancelado em {formatDateTime(order.canceledAt)}
+            </p>
+          )}
+          {order.refundNotice && (
+            <p className="mt-3 text-sm text-on-surface-variant">{order.refundNotice}</p>
+          )}
+        </section>
+      )}
+
       <section className="mb-6 rounded-2xl border border-outline-variant bg-surface-container-lowest p-6">
         <h3 className="mb-4 font-headline text-lg font-bold text-on-surface">Itens do pedido</h3>
         {order.items.length === 0 ? (

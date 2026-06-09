@@ -95,6 +95,9 @@ export interface OrderDetailResponse {
   delivery?: DeliveryResponse;
   timeline: OrderStatusHistoryResponse[];
   pickupInfo?: PickupInfoResponse;
+  cancellationReason?: string;
+  canceledAt?: string;
+  refundNotice?: string;
 }
 
 export interface OrderSummaryResponse {
@@ -107,6 +110,8 @@ export interface OrderSummaryResponse {
   itemCount: number;
   firstItemImage?: string;
   deliveryType: DeliveryType;
+  cancellationReason?: string;
+  canceledAt?: string;
 }
 
 export type OrderListFilter = 'ALL' | 'ACTIVE' | 'DELIVERED' | 'CANCELLED';

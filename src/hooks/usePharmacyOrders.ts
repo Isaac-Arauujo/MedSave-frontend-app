@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import * as pharmacyApi from '../api/pharmacyApi';
 import type { OrderStatus } from '../types/OrderTypes';
 import type {
+  CancelPharmacyOrderRequest,
   GetPharmacyOrdersParams,
   OrderStatusTransitionRequest,
   PharmacyOrdersTab,
@@ -101,6 +102,24 @@ export const usePharmacyOrders = () => {
     [loadOrders]
   );
 
+  const cancelOrder = useCallback(
+    async (orderId: number, data: CancelPharmacyOrderRequest) => {
+      try {
+        setIsSubmitting(true);
+        await pharmacyApi.cancelOrder(orderId, data);
+        toast.success('Pedido cancelado com sucesso. O cliente será notificado.');
+        await loadOrders();
+      } catch (err) {
+        const message = handleApiError(err);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [loadOrders]
+  );
+
   const updateOrderDelivery = useCallback(
     async (orderId: number, data: UpdatePharmacyDeliveryRequest) => {
       try {
@@ -134,6 +153,7 @@ export const usePharmacyOrders = () => {
     changeTab,
     applyStatusFilter,
     updateOrderStatus,
+    cancelOrder,
     updateOrderDelivery,
     refetch: loadOrders,
   };

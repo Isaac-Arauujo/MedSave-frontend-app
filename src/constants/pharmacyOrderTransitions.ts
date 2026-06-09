@@ -26,3 +26,6 @@ export const getAvailableOrderTransitions = (
       return [];
   }
 };
+
+export const canPharmacyCancelOrder = (status: OrderStatus): boolean =>
+  status === 'PENDING_PAYMENT' || status === 'PAID';

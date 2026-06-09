@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PageWrapper } from '../../components/layout/PageWrapper';
+import { OrderCancelModal } from '../../components/shared/OrderCancelModal';
 import { OrderStatusBadge } from '../../components/shared/OrderStatusBadge';
 import { OrderStatusUpdateModal } from '../../components/shared/OrderStatusUpdateModal';
 import { Badge } from '../../components/ui/Badge';
@@ -11,7 +12,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { Spinner } from '../../components/ui/Spinner';
 import { getDeliveryOptionLabel } from '../../constants/checkoutOptions';
 import { getOrderStatusLabel } from '../../constants/orderOptions';
-import { getAvailableOrderTransitions } from '../../constants/pharmacyOrderTransitions';
+import { getAvailableOrderTransitions, canPharmacyCancelOrder } from '../../constants/pharmacyOrderTransitions';
 import { usePharmacyOrders } from '../../hooks/usePharmacyOrders';
 import type { OrderStatus, OrderSummaryResponse } from '../../types/OrderTypes';
 import type { PharmacyOrdersTab } from '../../types/PharmacyOrderTypes';
@@ -58,10 +59,12 @@ export const PharmacyOrdersPage = () => {
     changeTab,
     applyStatusFilter,
     updateOrderStatus,
+    cancelOrder,
     refetch,
   } = usePharmacyOrders();
 
   const [pendingTransition, setPendingTransition] = useState<PendingTransition | null>(null);
+  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
 
   const handleConfirmTransition = async (reason?: string) => {
     if (!pendingTransition) {
@@ -75,15 +78,36 @@ export const PharmacyOrdersPage = () => {
     setPendingTransition(null);
   };
 
+  const handleConfirmCancel = async (reason: string) => {
+    if (cancelOrderId == null) {
+      return;
+    }
+
+    await cancelOrder(cancelOrderId, { reason });
+    setCancelOrderId(null);
+  };
+
   const renderOrderActions = (orderId: number, status: OrderStatus, deliveryType: OrderSummaryResponse['deliveryType']) => {
     const transitions = getAvailableOrderTransitions(status, deliveryType);
+    const showCancel = canPharmacyCancelOrder(status);
 
-    if (transitions.length === 0) {
+    if (transitions.length === 0 && !showCancel) {
       return <span className="text-sm text-on-surface-variant">—</span>;
     }
 
     return (
       <div className="flex flex-wrap gap-2">
+        {showCancel && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-red-50"
+            onClick={() => setCancelOrderId(orderId)}
+          >
+            Cancelar pedido
+          </Button>
+        )}
         {transitions.map((transition) => (
           <Button
             key={transition.newStatus}
@@ -244,6 +268,11 @@ export const PharmacyOrdersPage = () => {
                   </td>
                   <td className="px-4 py-3">
                     <OrderStatusBadge status={order.status} />
+                    {order.status === 'CANCELLED' && order.cancellationReason && (
+                      <p className="mt-1 max-w-xs text-xs text-on-surface-variant">
+                        Motivo: {order.cancellationReason}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3">{renderOrderActions(order.id, order.status, order.deliveryType)}</td>
                 </tr>
@@ -272,6 +301,13 @@ export const PharmacyOrdersPage = () => {
         confirmLabel={pendingTransition?.label ?? 'Confirmar'}
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmTransition}
+      />
+
+      <OrderCancelModal
+        isOpen={cancelOrderId != null}
+        onClose={() => setCancelOrderId(null)}
+        isSubmitting={isSubmitting}
+        onConfirm={handleConfirmCancel}
       />
     </PageWrapper>
   );

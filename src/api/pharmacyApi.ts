@@ -4,6 +4,7 @@ import type {
   GetPharmacyOrdersParams,
   GetPickupOrdersParams,
   OrderStatusTransitionRequest,
+  CancelPharmacyOrderRequest,
   PickupOrderResponse,
   UpdatePharmacyDeliveryRequest,
 } from '../types/PharmacyOrderTypes';
@@ -67,6 +68,13 @@ export const updateOrderStatus = async (
   data: OrderStatusTransitionRequest
 ): Promise<void> => {
   await api.patch(`/pharmacy/orders/${orderId}/status`, data);
+};
+
+export const cancelOrder = async (
+  orderId: number,
+  data: CancelPharmacyOrderRequest
+): Promise<void> => {
+  await api.post(`/pharmacy/orders/${orderId}/cancel`, data);
 };
 
 export const updateDelivery = async (

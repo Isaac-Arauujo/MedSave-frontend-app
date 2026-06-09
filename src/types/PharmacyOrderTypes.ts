@@ -16,6 +16,10 @@ export interface OrderStatusTransitionRequest {
   reason?: string;
 }
 
+export interface CancelPharmacyOrderRequest {
+  reason: string;
+}
+
 export interface GetPharmacyOrdersParams {
   page?: number;
   size?: number;
