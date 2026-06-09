@@ -1,5 +1,11 @@
 import type { PageResponse, PaginationParams } from '../types/CommonTypes';
 import type {
+  AdminUserListParams,
+  AdminUserResponse,
+  CreateAdminUserRequest,
+  CreateAdminUserResponse,
+} from '../types/AdminUserTypes';
+import type {
   CouponResponse,
   CreateCouponRequest,
   UpdateCouponRequest,
@@ -61,6 +67,22 @@ export const getCustomers = async (
   const response = await api.get<PageResponse<UserProfileResponse>>('/admin/customers', {
     params,
   });
+  return response.data;
+};
+
+export const getUsers = async (
+  params: AdminUserListParams = {}
+): Promise<PageResponse<AdminUserResponse>> => {
+  const response = await api.get<PageResponse<AdminUserResponse>>('/admin/users', {
+    params,
+  });
+  return response.data;
+};
+
+export const createUser = async (
+  data: CreateAdminUserRequest
+): Promise<CreateAdminUserResponse> => {
+  const response = await api.post<CreateAdminUserResponse>('/admin/users', data);
   return response.data;
 };
 

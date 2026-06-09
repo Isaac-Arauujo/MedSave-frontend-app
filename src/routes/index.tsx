@@ -7,6 +7,7 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { AdminCustomersPage } from '../pages/admin/AdminCustomersPage';
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminListingsPage } from '../pages/admin/AdminListingsPage';
 import { AdminPharmaciesPage } from '../pages/admin/AdminPharmaciesPage';
@@ -193,6 +194,14 @@ export const AppRouter = () => (
           element={
             <AdminRoute>
               <AdminCustomersPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_USERS}
+          element={
+            <AdminRoute>
+              <AdminUsersPage />
             </AdminRoute>
           }
         />

@@ -30,6 +30,7 @@ const pharmacyNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, label: 'Painel', icon: 'dashboard' },
   { to: ROUTES.ADMIN_CUSTOMERS, label: 'Clientes', icon: 'group' },
+  { to: ROUTES.ADMIN_USERS, label: 'Usuários', icon: 'manage_accounts' },
   { to: ROUTES.ADMIN_PHARMACIES, label: 'Farmácias', icon: 'local_pharmacy' },
   { to: ROUTES.ADMIN_PRODUCTS, label: 'Produtos', icon: 'medication' },
   { to: ROUTES.ADMIN_LISTINGS, label: 'Anúncios', icon: 'inventory_2' },
