@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import type {
@@ -144,9 +144,10 @@ export const AddressFormModal = ({
 
   const complementOnlyUpdate = isEditing && !structuralFieldsChanged;
 
-  const handlePlaceSelected = (place: ExtractedGooglePlaceAddress) => {
+  const handlePlaceSelected = useCallback((place: ExtractedGooglePlaceAddress) => {
     setSelectedPlace(place);
     setPlaceInvalidated(false);
+    setSearchQuery(place.formattedAddress);
     setValue('street', place.street, { shouldValidate: true });
     setValue('number', place.number || '', { shouldValidate: true });
     setValue('neighborhood', place.neighborhood, { shouldValidate: true });
@@ -155,7 +156,13 @@ export const AddressFormModal = ({
     if (place.zipCode) {
       setValue('zipCode', place.zipCode, { shouldValidate: true });
     }
-  };
+  }, [setValue]);
+
+  const handleUserSearchInput = useCallback((value: string) => {
+    setSearchQuery(value);
+    setSelectedPlace(null);
+    setPlaceInvalidated(true);
+  }, []);
 
   const handleStructuralFieldChange = () => {
     if (selectedPlace) {
@@ -321,13 +328,7 @@ export const AddressFormModal = ({
           resetKey={searchResetKey}
           disabled={isSubmitting}
           onPlaceSelected={handlePlaceSelected}
-          onInputChange={(value) => {
-            setSearchQuery(value);
-            if (selectedPlace) {
-              setSelectedPlace(null);
-              setPlaceInvalidated(true);
-            }
-          }}
+          onUserInputChange={handleUserSearchInput}
         />
 
         {status.main && (

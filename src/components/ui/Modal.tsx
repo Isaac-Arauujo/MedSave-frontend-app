@@ -41,11 +41,22 @@ export const Modal = ({
       }
     };
 
+    const ignorePacPointer = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('.pac-container')) {
+        event.stopPropagation();
+      }
+    };
+
     document.addEventListener('keydown', handleEscape);
+    document.addEventListener('mousedown', ignorePacPointer, true);
+    document.addEventListener('touchstart', ignorePacPointer, true);
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('mousedown', ignorePacPointer, true);
+      document.removeEventListener('touchstart', ignorePacPointer, true);
       document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
@@ -61,7 +72,13 @@ export const Modal = ({
         isSheet ? 'items-end justify-center sm:items-center sm:p-4' : 'items-center justify-center p-4'
       )}
       role="presentation"
-      onClick={onClose}
+      onClick={(event) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest('.pac-container')) {
+          return;
+        }
+        onClose();
+      }}
     >
       <div className="absolute inset-0 bg-[var(--color-neutral-900)]/50" aria-hidden="true" />
       <div

@@ -4,27 +4,48 @@ import {
   extractGooglePlaceAddress,
   type ExtractedGooglePlaceAddress,
 } from '../../utils/extractGooglePlaceAddress';
+import { resolveGooglePlaceResult } from '../../utils/googlePlaceDetails';
 import { loadGoogleMapsApi } from '../../utils/googleMapsLoader';
+import { logGooglePlaces } from '../../utils/googlePlacesLogger';
 import { Input } from '../ui/Input';
 
 interface GooglePlacesAddressAutocompleteProps {
   onPlaceSelected: (place: ExtractedGooglePlaceAddress) => void;
-  onInputChange?: (value: string) => void;
+  onUserInputChange?: (value: string) => void;
   disabled?: boolean;
   resetKey?: string | number;
 }
 
+const AUTocomplete_FIELDS = [
+  'place_id',
+  'formatted_address',
+  'address_components',
+  'geometry',
+] as const;
+
 export const GooglePlacesAddressAutocomplete = ({
   onPlaceSelected,
-  onInputChange,
+  onUserInputChange,
   disabled = false,
   resetKey,
 }: GooglePlacesAddressAutocompleteProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const isSelectingPlaceRef = useRef(false);
+  const onPlaceSelectedRef = useRef(onPlaceSelected);
+  const onUserInputChangeRef = useRef(onUserInputChange);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectionError, setSelectionError] = useState<string | null>(null);
+
+  onPlaceSelectedRef.current = onPlaceSelected;
+  onUserInputChangeRef.current = onUserInputChange;
+
+  const finishProgrammaticSelection = () => {
+    window.setTimeout(() => {
+      isSelectingPlaceRef.current = false;
+    }, 100);
+  };
 
   useEffect(() => {
     setSelectionError(null);
@@ -49,25 +70,51 @@ export const GooglePlacesAddressAutocomplete = ({
 
         autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
           componentRestrictions: { country: 'br' },
-          fields: ['place_id', 'formatted_address', 'address_components', 'geometry'],
+          fields: [...AUTocomplete_FIELDS],
           types: ['address'],
         });
 
         autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current?.getPlace();
-          if (!place) {
-            setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
-            return;
-          }
+          void (async () => {
+            isSelectingPlaceRef.current = true;
+            logGooglePlaces('place_changed fired');
 
-          const extracted = extractGooglePlaceAddress(place);
-          if (!extracted) {
-            setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
-            return;
-          }
+            try {
+              const initialPlace = autocompleteRef.current?.getPlace();
+              const hasPlaceId = Boolean(initialPlace?.place_id);
+              const hasGeometry = Boolean(initialPlace?.geometry?.location);
+              const componentsCount = initialPlace?.address_components?.length ?? 0;
 
-          setSelectionError(null);
-          onPlaceSelected(extracted);
+              logGooglePlaces(
+                `place received hasPlaceId=${hasPlaceId} hasGeometry=${hasGeometry} componentsCount=${componentsCount}`
+              );
+
+              const resolvedPlace = await resolveGooglePlaceResult(initialPlace);
+              if (!resolvedPlace) {
+                setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
+                return;
+              }
+
+              const extracted = extractGooglePlaceAddress(resolvedPlace);
+              logGooglePlaces(
+                `extracted address hasStreet=${Boolean(extracted?.street)} hasNumber=${Boolean(extracted?.number)} hasCity=${Boolean(extracted?.city)} hasState=${Boolean(extracted?.state)} hasZip=${Boolean(extracted?.zipCode && extracted.zipCode.length === 8)}`
+              );
+
+              if (!extracted) {
+                setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
+                return;
+              }
+
+              setSelectionError(null);
+              onPlaceSelectedRef.current(extracted);
+              logGooglePlaces('form populated from place');
+              logGooglePlaces('selectedPlace valid=true');
+            } catch {
+              setSelectionError('Não foi possível obter a localização. Tente outra sugestão.');
+            } finally {
+              finishProgrammaticSelection();
+            }
+          })();
         });
       } catch {
         if (active) {
@@ -89,7 +136,7 @@ export const GooglePlacesAddressAutocomplete = ({
         autocompleteRef.current = null;
       }
     };
-  }, [onPlaceSelected, resetKey]);
+  }, [resetKey]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -100,8 +147,16 @@ export const GooglePlacesAddressAutocomplete = ({
         required
         disabled={disabled || isLoading || Boolean(loadError)}
         onChange={(event) => {
+          const value = event.target.value;
+
+          if (isSelectingPlaceRef.current) {
+            logGooglePlaces('input change ignored because selection in progress');
+            return;
+          }
+
+          logGooglePlaces(`input changed source=user length=${value.length}`);
           setSelectionError(null);
-          onInputChange?.(event.target.value);
+          onUserInputChangeRef.current?.(value);
         }}
         autoComplete="off"
         className={clsx(
