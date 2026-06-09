@@ -4,6 +4,7 @@ import { differenceInDays, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { PageWrapper } from '../../components/layout/PageWrapper';
+import { ListingRecommendations } from '../../components/shared/ListingRecommendations';
 import { ProductDeliveryCard } from '../../components/shared/ProductDeliveryCard';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -282,6 +283,8 @@ export const ListingDetailPage = () => {
           {pharmacy.deliveryAvailable && <span>· Entrega disponível</span>}
         </div>
       </section>
+
+      <ListingRecommendations listingId={listing.id} className="mt-12" />
     </PageWrapper>
   );
 };

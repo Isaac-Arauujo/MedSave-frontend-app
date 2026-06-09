@@ -1,4 +1,5 @@
 import type { PageResponse, PaginationParams } from '../types/CommonTypes';
+import type { ListingRecommendationsResponse } from '../types/ListingRecommendationsTypes';
 import type {
   CreateListingRequest,
   ListingResponse,
@@ -22,6 +23,15 @@ export const getPublicListings = async (
 
 export const getPublicListing = async (id: number): Promise<ListingResponse> => {
   const response = await api.get<ListingResponse>(`/listings/${id}`);
+  return response.data;
+};
+
+export const getListingRecommendations = async (
+  id: number
+): Promise<ListingRecommendationsResponse> => {
+  const response = await api.get<ListingRecommendationsResponse>(
+    `/listings/${id}/recommendations`
+  );
   return response.data;
 };
 
