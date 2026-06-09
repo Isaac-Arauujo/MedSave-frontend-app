@@ -4,7 +4,7 @@ import { differenceInDays, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { PageWrapper } from '../../components/layout/PageWrapper';
-import { ListingFreightCalculator } from '../../components/shared/ListingFreightCalculator';
+import { ProductDeliveryCard } from '../../components/shared/ProductDeliveryCard';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -249,6 +249,12 @@ export const ListingDetailPage = () => {
                   </Button>
                 </Link>
               )}
+
+              <ProductDeliveryCard
+                listingId={listing.id}
+                pharmacy={pharmacy}
+                deliveryAvailable={pharmacy.deliveryAvailable ?? true}
+              />
             </div>
           )}
 
@@ -276,13 +282,6 @@ export const ListingDetailPage = () => {
           {pharmacy.deliveryAvailable && <span>· Entrega disponível</span>}
         </div>
       </section>
-
-      <ListingFreightCalculator
-        className="mt-6"
-        listingId={listing.id}
-        pharmacy={pharmacy}
-        deliveryAvailable={pharmacy.deliveryAvailable ?? true}
-      />
     </PageWrapper>
   );
 };

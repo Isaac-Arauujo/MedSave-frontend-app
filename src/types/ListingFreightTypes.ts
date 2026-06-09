@@ -18,6 +18,14 @@ export interface FreightEstimateOptionsRequest {
   destinationNumber?: string;
   destinationComplement?: string;
   addressId?: number;
+  destinationLatitude?: number;
+  destinationLongitude?: number;
+  formattedAddress?: string;
+  googlePlaceId?: string;
+  destinationStreet?: string;
+  destinationNeighborhood?: string;
+  destinationCity?: string;
+  destinationState?: string;
 }
 
 export interface FreightEstimateOptionsResponse {
