@@ -8,7 +8,7 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   layout?: 'default' | 'sheet';
 }
 
@@ -16,6 +16,7 @@ const sizeClasses: Record<NonNullable<ModalProps['size']>, string> = {
   sm: 'max-w-md',
   md: 'max-w-lg',
   lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
 };
 
 export const Modal = ({
@@ -69,7 +70,9 @@ export const Modal = ({
     <div
       className={clsx(
         'fixed inset-0 z-50 flex',
-        isSheet ? 'items-end justify-center sm:items-center sm:p-4' : 'items-center justify-center p-4'
+        isSheet
+          ? 'items-end justify-center p-2 sm:items-center sm:p-4'
+          : 'items-center justify-center p-2 sm:p-4'
       )}
       role="presentation"
       onClick={(event) => {
@@ -86,50 +89,40 @@ export const Modal = ({
         aria-modal="true"
         aria-labelledby={titleId}
         className={clsx(
-          'relative z-10 flex w-full flex-col bg-surface-container-lowest shadow-xl',
+          'relative z-10 flex w-full flex-col overflow-hidden bg-surface-container-lowest shadow-xl',
+          'max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] sm:max-h-[90vh]',
           isSheet
-            ? 'h-[100dvh] max-h-[100dvh] rounded-t-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:p-6'
-            : 'rounded-2xl p-6',
+            ? 'h-[100dvh] rounded-t-2xl sm:h-auto sm:max-w-none sm:rounded-2xl'
+            : 'rounded-2xl sm:max-w-none',
           sizeClasses[size]
         )}
         onClick={(event) => event.stopPropagation()}
       >
         <div
           className={clsx(
-            'flex shrink-0 items-start justify-between gap-4',
-            isSheet
-              ? 'border-b border-outline-variant px-4 py-3 sm:mb-4 sm:border-0 sm:p-0'
-              : 'mb-4'
+            'flex shrink-0 items-start justify-between gap-4 border-b border-outline-variant px-4 py-3 sm:px-6 sm:py-4',
+            !isSheet && 'sm:pt-6'
           )}
         >
-          <h2 id={titleId} className="font-headline text-lg font-bold text-on-surface sm:text-xl">
+          <h2
+            id={titleId}
+            className="min-w-0 break-words font-headline text-lg font-bold text-on-surface sm:text-xl"
+          >
             {title}
           </h2>
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar modal">
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar modal" className="shrink-0">
             <span className="material-symbols-outlined text-2xl" aria-hidden="true">
               close
             </span>
           </Button>
         </div>
 
-        <div
-          className={clsx(
-            'min-h-0 flex-1 text-on-surface',
-            isSheet ? 'overflow-y-auto overscroll-contain px-4 py-4 sm:overflow-visible sm:px-0 sm:py-0' : ''
-          )}
-        >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 text-on-surface sm:px-6">
           {children}
         </div>
 
         {footer && (
-          <div
-            className={clsx(
-              'shrink-0',
-              isSheet
-                ? 'border-t border-outline-variant px-4 py-3 sm:mt-6 sm:border-0 sm:p-0'
-                : 'mt-6 flex justify-end gap-3'
-            )}
-          >
+          <div className="shrink-0 border-t border-outline-variant px-4 py-3 sm:px-6 sm:pb-4">
             {footer}
           </div>
         )}

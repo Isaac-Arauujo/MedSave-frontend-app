@@ -219,12 +219,16 @@ export const AdminOrdersPage = () => {
         isOpen={detailOpen}
         onClose={handleCloseDetail}
         title={selectedOrder ? `Pedido ${selectedOrder.orderNumber}` : 'Detalhe do pedido'}
-        size="lg"
+        size="xl"
         footer={
           selectedOrder && (
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
               {canAdminCancelOrder(selectedOrder.status) && (
-                <Button variant="danger" onClick={() => setCancelOrderId(selectedOrder.id)}>
+                <Button
+                  variant="danger"
+                  className="w-full sm:w-auto"
+                  onClick={() => setCancelOrderId(selectedOrder.id)}
+                >
                   Cancelar pedido
                 </Button>
               )}
@@ -232,22 +236,32 @@ export const AdminOrdersPage = () => {
                 <Button
                   key={action.action}
                   variant="primary"
+                  className="w-full sm:w-auto"
                   onClick={() => setPendingAction({ orderId: selectedOrder.id, action })}
                 >
                   {action.label}
                 </Button>
               ))}
               {canAdminResendEmail(selectedOrder.status) && (
-                <Button variant="secondary" onClick={() => void resendEmail(selectedOrder.id)} isLoading={isSubmitting}>
+                <Button
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  onClick={() => void resendEmail(selectedOrder.id)}
+                  isLoading={isSubmitting}
+                >
                   Reenviar e-mail
                 </Button>
               )}
               {canAdminAddNote(selectedOrder.status) && (
-                <Button variant="secondary" onClick={() => setNoteOrderId(selectedOrder.id)}>
+                <Button
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  onClick={() => setNoteOrderId(selectedOrder.id)}
+                >
                   Adicionar observação
                 </Button>
               )}
-              <Button variant="secondary" onClick={handleCloseDetail}>
+              <Button variant="secondary" className="w-full sm:w-auto" onClick={handleCloseDetail}>
                 Fechar
               </Button>
             </div>
@@ -259,36 +273,38 @@ export const AdminOrdersPage = () => {
             <Spinner />
           </div>
         ) : selectedOrder ? (
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <OrderStatusBadge status={selectedOrder.status} />
               <Badge variant="neutral">{selectedOrder.deliveryTypeLabel}</Badge>
             </div>
 
-            <section>
-              <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Cliente</h3>
-              <p className="text-on-surface">{selectedOrder.customer.name}</p>
-              <p className="text-sm text-on-surface-variant">{selectedOrder.customer.email}</p>
-              {selectedOrder.customer.phone && (
-                <p className="text-sm text-on-surface-variant">{selectedOrder.customer.phone}</p>
-              )}
-            </section>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="min-w-0">
+                <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Cliente</h3>
+                <p className="break-words text-on-surface">{selectedOrder.customer.name}</p>
+                <p className="break-all text-sm text-on-surface-variant">{selectedOrder.customer.email}</p>
+                {selectedOrder.customer.phone && (
+                  <p className="break-words text-sm text-on-surface-variant">{selectedOrder.customer.phone}</p>
+                )}
+              </section>
 
-            <section>
-              <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Farmácia</h3>
-              <p className="text-on-surface">{selectedOrder.pharmacy.name}</p>
-              <p className="text-sm text-on-surface-variant">{selectedOrder.pharmacy.email}</p>
-            </section>
+              <section className="min-w-0">
+                <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Farmácia</h3>
+                <p className="break-words text-on-surface">{selectedOrder.pharmacy.name}</p>
+                <p className="break-all text-sm text-on-surface-variant">{selectedOrder.pharmacy.email}</p>
+              </section>
+            </div>
 
-            <section>
+            <section className="min-w-0">
               <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Itens</h3>
               <ul className="space-y-2">
                 {selectedOrder.items.map((item) => (
-                  <li key={item.id} className="flex justify-between text-sm">
-                    <span>
+                  <li key={item.id} className="flex min-w-0 items-start justify-between gap-3 text-sm">
+                    <span className="min-w-0 break-words text-on-surface">
                       {item.quantity}x {item.productName}
                     </span>
-                    <span>{formatCurrency(item.subtotal)}</span>
+                    <span className="shrink-0 font-medium text-on-surface">{formatCurrency(item.subtotal)}</span>
                   </li>
                 ))}
               </ul>
@@ -298,42 +314,44 @@ export const AdminOrdersPage = () => {
             </section>
 
             {selectedOrder.payment && (
-              <section>
+              <section className="min-w-0">
                 <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Pagamento</h3>
                 <p className="text-sm text-on-surface">{selectedOrder.payment.statusLabel}</p>
                 <p className="text-sm text-on-surface-variant">
                   Valor: {formatCurrency(selectedOrder.payment.amount)}
                 </p>
                 {selectedOrder.payment.externalId && (
-                  <p className="text-sm text-on-surface-variant">ID: {selectedOrder.payment.externalId}</p>
+                  <p className="break-all text-sm text-on-surface-variant">
+                    ID: {selectedOrder.payment.externalId}
+                  </p>
                 )}
               </section>
             )}
 
-            <section>
+            <section className="min-w-0">
               <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Estorno</h3>
-              <p className="text-sm text-on-surface">{selectedOrder.refund.statusLabel}</p>
+              <p className="break-words text-sm text-on-surface">{selectedOrder.refund.statusLabel}</p>
               {selectedOrder.refundNotice && (
-                <p className="mt-1 text-sm text-on-surface-variant">{selectedOrder.refundNotice}</p>
+                <p className="mt-1 break-words text-sm text-on-surface-variant">{selectedOrder.refundNotice}</p>
               )}
             </section>
 
-            <section>
+            <section className="min-w-0">
               <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Entrega / Retirada</h3>
-              <p className="text-sm text-on-surface">{selectedOrder.delivery.estimate}</p>
+              <p className="break-words text-sm text-on-surface">{selectedOrder.delivery.estimate}</p>
               {selectedOrder.delivery.pickupCode && (
                 <p className="text-sm text-on-surface-variant">Código: {selectedOrder.delivery.pickupCode}</p>
               )}
             </section>
 
             {selectedOrder.cancellationReason && (
-              <section>
+              <section className="min-w-0">
                 <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Cancelamento</h3>
-                <p className="text-sm text-on-surface">{selectedOrder.cancellationReason}</p>
+                <p className="break-words text-sm text-on-surface">{selectedOrder.cancellationReason}</p>
               </section>
             )}
 
-            <section>
+            <section className="min-w-0 overflow-x-hidden">
               <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">Histórico</h3>
               <OrderStatusTimeline
                 timeline={selectedOrder.statusHistory}
@@ -342,15 +360,18 @@ export const AdminOrdersPage = () => {
             </section>
 
             {selectedOrder.internalNotes.length > 0 && (
-              <section>
+              <section className="min-w-0">
                 <h3 className="mb-2 text-sm font-semibold uppercase text-on-surface-variant">
                   Observações internas
                 </h3>
                 <ul className="space-y-3">
                   {selectedOrder.internalNotes.map((note) => (
-                    <li key={note.id} className="rounded-xl border border-outline-variant bg-surface-container px-4 py-3 text-sm">
-                      <p className="text-on-surface">{note.note}</p>
-                      <p className="mt-1 text-xs text-on-surface-variant">
+                    <li
+                      key={note.id}
+                      className="rounded-xl border border-outline-variant bg-surface-container px-4 py-3 text-sm"
+                    >
+                      <p className="break-words text-on-surface">{note.note}</p>
+                      <p className="mt-1 break-all text-xs text-on-surface-variant">
                         {note.createdByEmail} · {formatDateTime(note.createdAt)}
                       </p>
                     </li>

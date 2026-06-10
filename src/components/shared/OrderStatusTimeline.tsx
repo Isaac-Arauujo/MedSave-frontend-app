@@ -45,7 +45,8 @@ export const OrderStatusTimeline = ({ timeline, currentStatus }: OrderStatusTime
                 'rounded-2xl border p-4',
                 isCurrent
                   ? 'border-primary bg-primary/5'
-                  : 'border-outline-variant bg-surface-container-lowest'
+                  : 'border-outline-variant bg-surface-container-lowest',
+                'min-w-0 break-words'
               )}
             >
               <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -61,11 +62,11 @@ export const OrderStatusTimeline = ({ timeline, currentStatus }: OrderStatusTime
                   <span className="text-xs font-semibold uppercase text-primary">Atual</span>
                 )}
               </div>
-              <p className="text-sm text-on-surface">
+              <p className="break-words text-sm text-on-surface">
                 Atualizado por <span className="font-medium">{entry.changedBy}</span>
               </p>
               {entry.reason && (
-                <p className="mt-1 text-sm text-on-surface-variant">{entry.reason}</p>
+                <p className="mt-1 break-words text-sm text-on-surface-variant">{entry.reason}</p>
               )}
               <p className="mt-2 text-xs text-on-surface-variant">
                 {formatDateTime(entry.changedAt)}
