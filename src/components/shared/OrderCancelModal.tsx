@@ -20,6 +20,7 @@ interface OrderCancelModalProps {
   onClose: () => void;
   isSubmitting?: boolean;
   onConfirm: (reason: string) => Promise<void>;
+  description?: string;
 }
 
 export const OrderCancelModal = ({
@@ -27,6 +28,7 @@ export const OrderCancelModal = ({
   onClose,
   isSubmitting = false,
   onConfirm,
+  description = 'Informe o motivo do cancelamento. Essa mensagem será enviada ao cliente.',
 }: OrderCancelModalProps) => {
   const {
     register,
@@ -72,9 +74,7 @@ export const OrderCancelModal = ({
       }
     >
       <form className="space-y-4" onSubmit={(event) => void onSubmit(event)}>
-        <p className="text-sm text-on-surface-variant">
-          Informe o motivo do cancelamento. Essa mensagem será enviada ao cliente.
-        </p>
+        <p className="text-sm text-on-surface-variant">{description}</p>
         <Input
           label="Motivo do cancelamento"
           placeholder="Ex: Produto indisponível no estoque"

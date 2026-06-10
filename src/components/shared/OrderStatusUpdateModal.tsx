@@ -9,7 +9,16 @@ const statusUpdateSchema = z.object({
   reason: z.string().optional(),
 });
 
+const requiredReasonSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(5, 'Informe um motivo com pelo menos 5 caracteres')
+    .max(500, 'Motivo deve ter no máximo 500 caracteres'),
+});
+
 type StatusUpdateFormData = z.input<typeof statusUpdateSchema>;
+type RequiredReasonFormData = z.infer<typeof requiredReasonSchema>;
 
 interface OrderStatusUpdateModalProps {
   isOpen: boolean;
@@ -18,6 +27,7 @@ interface OrderStatusUpdateModalProps {
   description: string;
   confirmLabel: string;
   isSubmitting?: boolean;
+  requireReason?: boolean;
   onConfirm: (reason?: string) => Promise<void>;
 }
 
@@ -28,6 +38,7 @@ export const OrderStatusUpdateModal = ({
   description,
   confirmLabel,
   isSubmitting = false,
+  requireReason = false,
   onConfirm,
 }: OrderStatusUpdateModalProps) => {
   const {
@@ -35,8 +46,8 @@ export const OrderStatusUpdateModal = ({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<StatusUpdateFormData>({
-    resolver: zodResolver(statusUpdateSchema),
+  } = useForm<StatusUpdateFormData | RequiredReasonFormData>({
+    resolver: zodResolver(requireReason ? requiredReasonSchema : statusUpdateSchema),
     defaultValues: { reason: '' },
   });
 
@@ -46,7 +57,8 @@ export const OrderStatusUpdateModal = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    await onConfirm(data.reason?.trim() || undefined);
+    const reason = data.reason?.trim();
+    await onConfirm(requireReason ? reason : reason || undefined);
     reset({ reason: '' });
   });
 
@@ -69,7 +81,7 @@ export const OrderStatusUpdateModal = ({
       <form className="space-y-4" onSubmit={(event) => void onSubmit(event)}>
         <p className="text-sm text-on-surface-variant">{description}</p>
         <Input
-          label="Motivo (opcional)"
+          label={requireReason ? 'Motivo da intervenção *' : 'Motivo (opcional)'}
           error={errors.reason?.message}
           {...register('reason')}
         />

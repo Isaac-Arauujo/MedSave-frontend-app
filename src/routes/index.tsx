@@ -8,6 +8,7 @@ import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { AdminCustomersPage } from '../pages/admin/AdminCustomersPage';
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
+import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminListingsPage } from '../pages/admin/AdminListingsPage';
 import { AdminPharmaciesPage } from '../pages/admin/AdminPharmaciesPage';
@@ -235,7 +236,11 @@ export const AppRouter = () => (
         />
         <Route
           path={ROUTES.ADMIN_ORDERS}
-          element={<AdminRoute>{placeholder('Pedidos')}</AdminRoute>}
+          element={
+            <AdminRoute>
+              <AdminOrdersPage />
+            </AdminRoute>
+          }
         />
 
         <Route path="*" element={placeholder('Página não encontrada')} />

@@ -12,7 +12,16 @@ import type {
   UpdateCouponRequest,
 } from '../types/CouponTypes';
 import type { ListingResponse, UpdateListingRequest } from '../types/ListingTypes';
-import type { OrderSummaryResponse } from '../types/OrderTypes';
+import type {
+  AdminOrderCancelRequest,
+  AdminOrderCancelResponse,
+  AdminOrderDetailResponse,
+  AdminOrderInternalNoteResponse,
+  AdminOrderListParams,
+  AdminOrderNoteRequest,
+  AdminOrderStatusRequest,
+  AdminOrderSummaryResponse,
+} from '../types/AdminOrderTypes';
 import type { PharmacyResponse, PharmacyStatus } from '../types/PharmacyTypes';
 import type {
   CreateProductRequest,
@@ -136,12 +145,45 @@ export const deleteListing = async (id: number): Promise<void> => {
 };
 
 export const getAdminOrders = async (
-  params: PaginationParams = {}
-): Promise<PageResponse<OrderSummaryResponse>> => {
-  const response = await api.get<PageResponse<OrderSummaryResponse>>('/admin/orders', {
+  params: AdminOrderListParams = {}
+): Promise<PageResponse<AdminOrderSummaryResponse>> => {
+  const response = await api.get<PageResponse<AdminOrderSummaryResponse>>('/admin/orders', {
     params,
   });
   return response.data;
+};
+
+export const getAdminOrder = async (orderId: number): Promise<AdminOrderDetailResponse> => {
+  const response = await api.get<AdminOrderDetailResponse>(`/admin/orders/${orderId}`);
+  return response.data;
+};
+
+export const cancelAdminOrder = async (
+  orderId: number,
+  data: AdminOrderCancelRequest
+): Promise<AdminOrderCancelResponse> => {
+  const response = await api.post<AdminOrderCancelResponse>(`/admin/orders/${orderId}/cancel`, data);
+  return response.data;
+};
+
+export const updateAdminOrderStatus = async (
+  orderId: number,
+  data: AdminOrderStatusRequest
+): Promise<AdminOrderDetailResponse> => {
+  const response = await api.post<AdminOrderDetailResponse>(`/admin/orders/${orderId}/status`, data);
+  return response.data;
+};
+
+export const addAdminOrderNote = async (
+  orderId: number,
+  data: AdminOrderNoteRequest
+): Promise<AdminOrderInternalNoteResponse> => {
+  const response = await api.post<AdminOrderInternalNoteResponse>(`/admin/orders/${orderId}/notes`, data);
+  return response.data;
+};
+
+export const resendAdminOrderEmail = async (orderId: number): Promise<void> => {
+  await api.post(`/admin/orders/${orderId}/resend-email`);
 };
 
 export const getProducts = async (
