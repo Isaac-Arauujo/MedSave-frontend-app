@@ -7,6 +7,40 @@ export type PrescriptionReviewStatus =
   | 'REJECTED'
   | 'CANCELLED';
 
+export interface PrescriptionUploadResponse {
+  documentId: number;
+  reviewId: number;
+  listingId: number;
+  productId: number;
+  status: PrescriptionReviewStatus;
+  message: string;
+}
+
+export interface CustomerPrescriptionReview {
+  documentId: number;
+  reviewId: number;
+  listingId: number;
+  productId: number;
+  productName: string;
+  pharmacyName: string;
+  status: PrescriptionReviewStatus;
+  uploadedAt: string;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
+}
+
+export interface UploadPrescriptionParams {
+  file: File;
+  listingId: number;
+  checkoutSessionToken?: string;
+}
+
+export interface GetMyPrescriptionsParams {
+  listingId?: number;
+  checkoutSessionToken?: string;
+  status?: PrescriptionReviewStatus;
+}
+
 export type PharmacyPrescriptionTab = 'pending' | 'approved' | 'rejected' | 'all';
 
 export interface PharmacyPrescriptionReviewSummary {

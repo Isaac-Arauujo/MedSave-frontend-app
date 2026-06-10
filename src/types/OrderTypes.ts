@@ -131,12 +131,27 @@ export interface CreateOrderRequest {
   checkoutSessionToken: string;
 }
 
-export type OrderCreationErrorCode = 'session_expired' | 'insufficient_stock' | 'generic';
+export type OrderCreationErrorCode =
+  | 'session_expired'
+  | 'insufficient_stock'
+  | 'prescription_required'
+  | 'prescription_pending'
+  | 'prescription_rejected'
+  | 'generic';
+
+export interface PrescriptionBlockedItem {
+  listingId: number;
+  productId: number;
+  productName: string;
+  prescriptionStatus: string;
+  rejectionReason?: string | null;
+}
 
 export interface ParsedOrderCreationError {
   code: OrderCreationErrorCode;
   message: string;
   itemName?: string;
+  prescriptionItems?: PrescriptionBlockedItem[];
 }
 
 export const toOrderResponse = (detail: OrderDetailResponse): OrderResponse => ({

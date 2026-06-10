@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { CartItemControls } from '../../components/shared/CartItemControls';
+import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { Modal } from '../../components/ui/Modal';
 import { PageLoader } from '../../components/ui/PageLoader';
+import { getPrescriptionRequirementStatusLabel } from '../../constants/prescriptionOptions';
 import { ROUTES } from '../../constants/routes';
 import { ROLES } from '../../constants/roles';
 import { useCart } from '../../hooks/useCart';
@@ -14,6 +16,7 @@ import { useAuthStore } from '../../store/authStore';
 import { getDashboardPath } from '../../utils/getDashboardPath';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { getImageUrl } from '../../utils/getImageUrl';
+import { itemRequiresPrescription } from '../../utils/prescriptionUtils';
 
 export const CartPage = () => {
   const navigate = useNavigate();
@@ -284,6 +287,19 @@ export const CartPage = () => {
                     <p className="mt-2 font-headline font-bold text-primary">
                       Subtotal: {formatCurrency(item.itemSubtotal)}
                     </p>
+                    {itemRequiresPrescription(item) && (
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Badge variant="warning">Exige receita médica</Badge>
+                        <p className="text-sm text-on-surface-variant">
+                          Este item exige receita médica. A receita será enviada no checkout.
+                        </p>
+                        {item.prescriptionStatus && item.prescriptionStatus !== 'NOT_REQUIRED' && (
+                          <Badge variant="neutral">
+                            {getPrescriptionRequirementStatusLabel(item.prescriptionStatus)}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

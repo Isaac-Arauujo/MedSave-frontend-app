@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { AddressFormModal } from '../../components/shared/AddressFormModal';
 import { DeliveryOptionCard } from '../../components/shared/DeliveryOptionCard';
-import { Badge } from '../../components/ui/Badge';
+import { PrescriptionUploadCard } from '../../components/shared/PrescriptionUploadCard';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -32,6 +32,10 @@ import type { CreateAddressRequest } from '../../types/AddressTypes';
 import { formatAddressLine, formatCartPharmacyLine } from '../../utils/formatAddress';
 import { formatCpf } from '../../utils/formatCpf';
 import { formatCurrency } from '../../utils/formatCurrency';
+import {
+  cartHasBlockingPrescriptions,
+  getPrescriptionItems,
+} from '../../utils/prescriptionUtils';
 
 const thirdPartyPickupSchema = z.object({
   pickupPersonName: z.string().min(1, 'Nome é obrigatório'),
@@ -86,7 +90,7 @@ const StepIndicator = ({ currentStep }: { currentStep: CheckoutStep }) => {
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cart, fetchCart } = useCart();
+  const { cart, fetchCart, removeItem } = useCart();
   const { profile } = useProfile();
   const { addresses, isLoading: isAddressesLoading, createAddress, refetch: refetchAddresses } =
     useAddresses();
@@ -119,6 +123,8 @@ export const CheckoutPage = () => {
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
   const [expiredModalOpen, setExpiredModalOpen] = useState(false);
   const [isAddressSubmitting, setIsAddressSubmitting] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
+  const [prescriptionError, setPrescriptionError] = useState<string | null>(null);
 
   const {
     register,
@@ -283,6 +289,8 @@ export const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    setPrescriptionError(null);
+
     try {
       const order = await placeOrder();
 
@@ -311,8 +319,36 @@ export const CheckoutPage = () => {
           : parsed.message;
         toast.error(message);
         navigate(ROUTES.CART);
+        return;
+      }
+
+      if (
+        parsed.code === 'prescription_required' ||
+        parsed.code === 'prescription_pending' ||
+        parsed.code === 'prescription_rejected'
+      ) {
+        setPrescriptionError(parsed.message);
+        toast.error(parsed.message);
+        await fetchCart();
       }
     }
+  };
+
+  const prescriptionItems = cart ? getPrescriptionItems(cart.items) : [];
+  const hasBlockingPrescriptions = cart ? cartHasBlockingPrescriptions(cart.items) : false;
+
+  const handleRemovePrescriptionItem = async (itemId: number) => {
+    try {
+      setRemovingItemId(itemId);
+      await removeItem(itemId);
+      await fetchCart();
+    } finally {
+      setRemovingItemId(null);
+    }
+  };
+
+  const handlePrescriptionUploadSuccess = async () => {
+    await fetchCart();
   };
 
   if (isLoading && !session) {
@@ -561,6 +597,49 @@ export const CheckoutPage = () => {
 
       {currentStep === 'review' && (
         <section className="space-y-6">
+          {prescriptionItems.length > 0 && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="font-headline text-xl font-bold text-on-surface">Receita médica</h2>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Envie a receita dos medicamentos abaixo antes de finalizar o pedido.
+                </p>
+              </div>
+
+              {hasBlockingPrescriptions && (
+                <p
+                  className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                  role="alert"
+                >
+                  Existem itens que exigem receita médica. Aguarde a aprovação da farmácia ou
+                  corrija os itens antes de continuar.
+                </p>
+              )}
+
+              {prescriptionError && (
+                <p
+                  className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-[var(--color-danger)]"
+                  role="alert"
+                >
+                  {prescriptionError}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-4">
+                {prescriptionItems.map((item) => (
+                  <PrescriptionUploadCard
+                    key={item.itemId}
+                    item={item}
+                    checkoutSessionToken={session?.sessionToken}
+                    onUploadSuccess={handlePrescriptionUploadSuccess}
+                    onRemoveItem={() => handleRemovePrescriptionItem(item.itemId)}
+                    isRemoving={removingItemId === item.itemId}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-outline-variant bg-surface-container-lowest p-6">
             <h2 className="mb-4 font-headline text-xl font-bold text-on-surface">Resumo do pedido</h2>
 
@@ -664,7 +743,12 @@ export const CheckoutPage = () => {
             <Button variant="secondary" onClick={() => goToStep('payment')}>
               Voltar
             </Button>
-            <Button variant="primary" onClick={() => void handlePlaceOrder()} isLoading={isSubmitting}>
+            <Button
+              variant="primary"
+              onClick={() => void handlePlaceOrder()}
+              isLoading={isSubmitting}
+              disabled={hasBlockingPrescriptions}
+            >
               Finalizar pedido
             </Button>
           </div>

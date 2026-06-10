@@ -1,11 +1,40 @@
 import type {
+  CustomerPrescriptionReview,
+  GetMyPrescriptionsParams,
   GetPharmacyPrescriptionReviewsParams,
   PharmacyPrescriptionReviewDetail,
   PharmacyPrescriptionReviewPage,
   PrescriptionReviewApproveRequest,
   PrescriptionReviewRejectRequest,
+  PrescriptionUploadResponse,
+  UploadPrescriptionParams,
 } from '../types/PrescriptionTypes';
 import { api } from './axiosInstance';
+
+export const uploadPrescription = async ({
+  file,
+  listingId,
+  checkoutSessionToken,
+}: UploadPrescriptionParams): Promise<PrescriptionUploadResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('listingId', String(listingId));
+  if (checkoutSessionToken) {
+    formData.append('checkoutSessionToken', checkoutSessionToken);
+  }
+
+  const response = await api.post<PrescriptionUploadResponse>('/prescriptions', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const getMyPrescriptions = async (
+  params: GetMyPrescriptionsParams = {}
+): Promise<CustomerPrescriptionReview[]> => {
+  const response = await api.get<CustomerPrescriptionReview[]>('/prescriptions/my', { params });
+  return response.data;
+};
 
 export const getPharmacyPrescriptionReviews = async (
   params: GetPharmacyPrescriptionReviewsParams = {}
