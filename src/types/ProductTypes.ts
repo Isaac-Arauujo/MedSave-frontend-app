@@ -3,7 +3,17 @@ export type ProductCategory =
   | 'ANTIBIOTIC'
   | 'ANTIHYPERTENSIVE'
   | 'VITAMIN'
-  | 'DERMATOLOGICAL';
+  | 'DERMATOLOGY'
+  | 'OTHER';
+
+export type PrescriptionType =
+  | 'NONE'
+  | 'SIMPLE'
+  | 'RETAINED'
+  | 'ANTIBIOTIC'
+  | 'CONTROLLED_C1'
+  | 'CONTROLLED_C5'
+  | 'CONTROLLED_OTHER';
 
 export interface ProductResponse {
   id: number;
@@ -11,6 +21,8 @@ export interface ProductResponse {
   activeIngredient?: string;
   category: ProductCategory;
   requiresPrescription: boolean;
+  prescriptionType?: PrescriptionType;
+  requiresPharmacistReview?: boolean;
   images: string[];
   active: boolean;
 }
@@ -20,6 +32,8 @@ export interface CreateProductRequest {
   activeIngredient?: string;
   category: ProductCategory;
   requiresPrescription: boolean;
+  prescriptionType?: PrescriptionType;
+  requiresPharmacistReview?: boolean;
   images: string[];
 }
 
@@ -28,6 +42,8 @@ export interface UpdateProductRequest {
   activeIngredient?: string;
   category?: ProductCategory;
   requiresPrescription?: boolean;
+  prescriptionType?: PrescriptionType;
+  requiresPharmacistReview?: boolean;
   images?: string[];
   active?: boolean;
 }
