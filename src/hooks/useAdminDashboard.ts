@@ -1,21 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as adminApi from '../api/adminApi';
+import type { AdminDashboardStatsResponse } from '../api/adminApi';
 import { handleApiError } from '../utils/handleApiError';
 
-export interface AdminDashboardStats {
-  totalCustomers: number;
-  totalPharmacies: number;
-  pendingApprovals: number;
-  /** null = métrica indisponível (API de pedidos admin ainda não existe). */
-  totalOrdersToday: number | null;
-}
+export type AdminDashboardStats = AdminDashboardStatsResponse;
 
 export const useAdminDashboard = () => {
   const [stats, setStats] = useState<AdminDashboardStats>({
     totalCustomers: 0,
     totalPharmacies: 0,
     pendingApprovals: 0,
-    totalOrdersToday: null,
+    ordersToday: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,19 +19,8 @@ export const useAdminDashboard = () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const [customers, pharmacies, pending] = await Promise.all([
-        adminApi.getCustomers({ page: 0, size: 1 }),
-        adminApi.getPharmacies({ page: 0, size: 1 }),
-        adminApi.getPharmacies({ page: 0, size: 1, status: 'PENDING' }),
-      ]);
-
-      setStats({
-        totalCustomers: customers.totalElements,
-        totalPharmacies: pharmacies.totalElements,
-        pendingApprovals: pending.totalElements,
-        totalOrdersToday: null,
-      });
+      const data = await adminApi.getDashboardStats();
+      setStats(data);
     } catch (err) {
       setError(handleApiError(err));
     } finally {

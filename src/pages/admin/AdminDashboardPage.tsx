@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import clsx from 'clsx';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { PageLoader } from '../../components/ui/PageLoader';
@@ -8,14 +9,32 @@ import { useAdminDashboard } from '../../hooks/useAdminDashboard';
 interface StatCardProps {
   title: string;
   value: string;
+  to?: string;
 }
 
-const StatCard = ({ title, value }: StatCardProps) => (
-  <div className="rounded-2xl border border-outline-variant bg-surface-container-lowest p-5">
-    <p className="text-sm font-medium text-on-surface-variant">{title}</p>
-    <p className="mt-2 font-headline text-3xl font-bold text-on-surface">{value}</p>
-  </div>
-);
+const StatCard = ({ title, value, to }: StatCardProps) => {
+  const card = (
+    <div
+      className={clsx(
+        'rounded-2xl border border-outline-variant bg-surface-container-lowest p-5',
+        to && 'transition-shadow hover:shadow-md'
+      )}
+    >
+      <p className="text-sm font-medium text-on-surface-variant">{title}</p>
+      <p className="mt-2 font-headline text-3xl font-bold text-on-surface">{value}</p>
+    </div>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
+};
 
 const quickLinks = [
   { to: ROUTES.ADMIN_CUSTOMERS, label: 'Clientes', icon: 'group' },
@@ -45,7 +64,8 @@ export const AdminDashboardPage = () => {
         <StatCard title="Aprovações pendentes" value={String(stats.pendingApprovals)} />
         <StatCard
           title="Pedidos hoje"
-          value={stats.totalOrdersToday === null ? 'Em breve' : String(stats.totalOrdersToday)}
+          value={String(stats.ordersToday)}
+          to={ROUTES.ADMIN_ORDERS}
         />
       </section>
 

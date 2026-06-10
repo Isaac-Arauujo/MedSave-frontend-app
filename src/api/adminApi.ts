@@ -33,6 +33,18 @@ import type {
 import type { UserProfileResponse } from '../types/UserTypes';
 import { api } from './axiosInstance';
 
+export interface AdminDashboardStatsResponse {
+  totalCustomers: number;
+  totalPharmacies: number;
+  pendingApprovals: number;
+  ordersToday: number;
+}
+
+export const getDashboardStats = async (): Promise<AdminDashboardStatsResponse> => {
+  const response = await api.get<AdminDashboardStatsResponse>('/admin/dashboard/stats');
+  return response.data;
+};
+
 export interface AdminPharmacyListParams extends PaginationParams {
   status?: PharmacyStatus;
 }
