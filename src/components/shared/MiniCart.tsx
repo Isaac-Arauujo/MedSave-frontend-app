@@ -28,7 +28,8 @@ const MiniCartSkeleton = () => (
 );
 
 export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
-  const { summary, isLoading, error, itemCount, refetch } = useMiniCart(isOpen);
+  const { summary, anonymousDisplay, isGuest, isLoading, error, itemCount, refetch } =
+    useMiniCart(isOpen);
 
   useEffect(() => {
     if (!isOpen) {
@@ -50,7 +51,8 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
     };
   }, [isOpen, onClose]);
 
-  const isEmpty = !isLoading && (!summary || summary.items.length === 0);
+  const guestItems = anonymousDisplay?.items ?? [];
+  const isEmpty = !isLoading && itemCount === 0;
 
   return (
     <>
@@ -104,6 +106,39 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
               title="Seu carrinho está vazio"
               description="Adicione produtos aos anúncios para vê-los aqui."
             />
+          ) : isGuest ? (
+            <ul className="divide-y divide-outline-variant">
+              {guestItems.map((item) => {
+                const imageUrl = getImageUrl(item.firstImage);
+                return (
+                  <li key={item.listingId} className="flex gap-3 p-4">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-container">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={item.productName}
+                          className="h-full w-full object-cover"
+                          width={48}
+                          height={48}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-on-surface-variant">
+                          <span className="material-symbols-outlined text-xl" aria-hidden="true">
+                            medication
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-on-surface">{item.productName}</p>
+                      <p className="text-sm text-on-surface-variant">
+                        {item.quantity} × {formatCurrency(item.unitPrice)}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           ) : (
             summary && (
               <ul className="divide-y divide-outline-variant">
@@ -143,41 +178,71 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
           )}
         </div>
 
-        {!isLoading && !error && summary && summary.items.length > 0 && (
+        {!isLoading && !error && itemCount > 0 && (
           <footer className="border-t border-outline-variant p-4">
-            <dl className="mb-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-on-surface-variant">Subtotal</dt>
-                <dd className="font-medium text-on-surface">{formatCurrency(summary.subtotal)}</dd>
-              </div>
-              {summary.discount > 0 && (
-                <div className="flex justify-between">
-                  <dt className="text-on-surface-variant">Desconto</dt>
-                  <dd className="font-medium text-[var(--color-success)]">
-                    -{formatCurrency(summary.discount)}
-                  </dd>
+            {isGuest && anonymousDisplay ? (
+              <>
+                <div className="mb-4 flex justify-between text-base">
+                  <span className="font-semibold text-on-surface">Total</span>
+                  <span className="font-headline font-bold text-primary">
+                    {formatCurrency(anonymousDisplay.total)}
+                  </span>
                 </div>
-              )}
-              <div className="flex justify-between border-t border-outline-variant pt-2 text-base">
-                <dt className="font-semibold text-on-surface">Total</dt>
-                <dd className="font-headline font-bold text-primary">
-                  {formatCurrency(summary.total)}
-                </dd>
-              </div>
-            </dl>
+                <div className="flex flex-col gap-2">
+                  <Link to={ROUTES.CART} onClick={onClose}>
+                    <Button variant="secondary" className="w-full">
+                      Ver carrinho
+                    </Button>
+                  </Link>
+                  <Link
+                    to={`${ROUTES.LOGIN}?redirect=${encodeURIComponent(ROUTES.CHECKOUT)}`}
+                    onClick={onClose}
+                  >
+                    <Button variant="primary" className="w-full">
+                      Entrar para finalizar
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              summary && (
+                <>
+                  <dl className="mb-4 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <dt className="text-on-surface-variant">Subtotal</dt>
+                      <dd className="font-medium text-on-surface">{formatCurrency(summary.subtotal)}</dd>
+                    </div>
+                    {summary.discount > 0 && (
+                      <div className="flex justify-between">
+                        <dt className="text-on-surface-variant">Desconto</dt>
+                        <dd className="font-medium text-[var(--color-success)]">
+                          -{formatCurrency(summary.discount)}
+                        </dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-outline-variant pt-2 text-base">
+                      <dt className="font-semibold text-on-surface">Total</dt>
+                      <dd className="font-headline font-bold text-primary">
+                        {formatCurrency(summary.total)}
+                      </dd>
+                    </div>
+                  </dl>
 
-            <div className="flex flex-col gap-2">
-              <Link to={ROUTES.CART} onClick={onClose}>
-                <Button variant="secondary" className="w-full">
-                  Ver carrinho
-                </Button>
-              </Link>
-              <Link to={ROUTES.CHECKOUT} onClick={onClose}>
-                <Button variant="primary" className="w-full">
-                  Ir para checkout
-                </Button>
-              </Link>
-            </div>
+                  <div className="flex flex-col gap-2">
+                    <Link to={ROUTES.CART} onClick={onClose}>
+                      <Button variant="secondary" className="w-full">
+                        Ver carrinho
+                      </Button>
+                    </Link>
+                    <Link to={ROUTES.CHECKOUT} onClick={onClose}>
+                      <Button variant="primary" className="w-full">
+                        Ir para checkout
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              )
+            )}
           </footer>
         )}
       </aside>

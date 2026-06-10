@@ -26,6 +26,16 @@ export const getPublicListing = async (id: number): Promise<ListingResponse> => 
   return response.data;
 };
 
+export const getPublicListingsBatch = async (ids: number[]): Promise<ListingResponse[]> => {
+  if (ids.length === 0) {
+    return [];
+  }
+  const response = await api.get<ListingResponse[]>('/listings/batch', {
+    params: { ids: ids.join(',') },
+  });
+  return response.data;
+};
+
 export const getListingRecommendations = async (
   id: number
 ): Promise<ListingRecommendationsResponse> => {

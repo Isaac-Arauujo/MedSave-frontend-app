@@ -109,20 +109,14 @@ export const ListingCard = ({
         </div>
 
         <div className="mt-auto pt-2">
-          {isCustomer ? (
+          {!isAuthenticated || isCustomer ? (
             <Button variant="primary" size="sm" className="w-full" onClick={onAddToCart}>
               Adicionar ao carrinho
             </Button>
-          ) : isAuthenticated ? (
+          ) : (
             <Button variant="secondary" size="sm" className="w-full" disabled>
               Apenas clientes podem comprar
             </Button>
-          ) : (
-            <Link to={ROUTES.LOGIN} className="block">
-              <Button variant="secondary" size="sm" className="w-full">
-                Faça login para comprar
-              </Button>
-            </Link>
           )}
         </div>
       </div>

@@ -108,14 +108,7 @@ export const AppRouter = () => (
             </CustomerRoute>
           }
         />
-        <Route
-          path={ROUTES.CART}
-          element={
-            <CustomerRoute>
-              <CartPage />
-            </CustomerRoute>
-          }
-        />
+        <Route path={ROUTES.CART} element={<CartPage />} />
         <Route
           path={ROUTES.CHECKOUT}
           element={

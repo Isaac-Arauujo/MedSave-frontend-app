@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
@@ -12,6 +12,7 @@ interface CustomerRouteProps {
 }
 
 export const CustomerRoute = ({ children }: CustomerRouteProps) => {
+  const location = useLocation();
   const hydrated = useAuthHydrated();
   const { isAuthenticated, role } = useAuthStore();
 
@@ -20,7 +21,8 @@ export const CustomerRoute = ({ children }: CustomerRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`${ROUTES.LOGIN}?redirect=${redirect}`} replace />;
   }
 
   if (role !== ROLES.CUSTOMER) {

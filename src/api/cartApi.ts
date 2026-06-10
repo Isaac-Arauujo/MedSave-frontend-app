@@ -2,6 +2,8 @@ import type {
   AddCartItemRequest,
   CartResponse,
   CartSummaryResponse,
+  MergeCartRequest,
+  MergeCartResponse,
   UpdateCartItemRequest,
 } from '../types/CartTypes';
 import type { ApplyCouponRequest } from '../types/CouponTypes';
@@ -19,6 +21,11 @@ export const getCartSummary = async (): Promise<CartSummaryResponse> => {
 
 export const addItem = async (data: AddCartItemRequest): Promise<CartResponse> => {
   const response = await api.post<CartResponse>('/cart/items', data);
+  return response.data;
+};
+
+export const mergeCart = async (data: MergeCartRequest): Promise<MergeCartResponse> => {
+  const response = await api.post<MergeCartResponse>('/cart/merge', data);
   return response.data;
 };
 

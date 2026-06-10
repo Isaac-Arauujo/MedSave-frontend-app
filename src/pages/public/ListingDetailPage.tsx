@@ -62,11 +62,16 @@ export const ListingDetailPage = () => {
   };
 
   const handleAddToCart = () => {
-    if (!isCustomer) {
-      toast.error('Faça login como cliente para adicionar ao carrinho.');
+    if (isAuthenticated && !isCustomer) {
+      toast.error('Apenas clientes podem adicionar produtos ao carrinho.');
       return;
     }
-    void addItem(listing.id, quantity);
+    void addItem({
+      listingId: listing.id,
+      quantity,
+      pharmacyId: pharmacy.id,
+      pharmacyName: pharmacy.name,
+    });
   };
 
   const handleFavorite = () => {
@@ -235,7 +240,7 @@ export const ListingDetailPage = () => {
                 />
               </div>
 
-              {isCustomer ? (
+              {!isAuthenticated || isCustomer ? (
                 <Button
                   variant="primary"
                   onClick={handleAddToCart}
@@ -244,11 +249,9 @@ export const ListingDetailPage = () => {
                   Adicionar ao carrinho
                 </Button>
               ) : (
-                <Link to={ROUTES.LOGIN}>
-                  <Button variant="primary" className="w-full">
-                    Faça login para comprar
-                  </Button>
-                </Link>
+                <Button variant="secondary" disabled>
+                  Apenas clientes podem comprar
+                </Button>
               )}
 
               <ProductDeliveryCard

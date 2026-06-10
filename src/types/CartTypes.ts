@@ -61,5 +61,66 @@ export interface UpdateCartItemRequest {
 export interface PharmacyConflictState {
   listingId: number;
   quantity: number;
+  pharmacyId?: number;
+  pharmacyName?: string;
   currentPharmacyName: string;
+  incomingPharmacyName?: string;
+  source: 'add' | 'anonymous' | 'merge';
+}
+
+export interface MergeCartItemRequest {
+  listingId: number;
+  quantity: number;
+}
+
+export interface MergeCartRequest {
+  items: MergeCartItemRequest[];
+}
+
+export interface MergedCartItemResult {
+  listingId: number;
+  quantity: number;
+  status: 'MERGED';
+}
+
+export interface RejectedCartItemResult {
+  listingId: number;
+  quantity: number;
+  reason: string;
+  message: string;
+}
+
+export interface MergeCartResponse {
+  cart: CartResponse;
+  mergedItems: MergedCartItemResult[];
+  rejectedItems: RejectedCartItemResult[];
+  warnings: string[];
+}
+
+export interface OnePharmacyCartConflictResponse {
+  code: 'ONE_PHARMACY_CONFLICT';
+  message: string;
+  currentPharmacyName: string;
+  incomingPharmacyName: string;
+}
+
+export interface AnonymousCartDisplayItem {
+  listingId: number;
+  productName: string;
+  firstImage?: string;
+  quantity: number;
+  unitPrice: number;
+  itemSubtotal: number;
+  maxQuantity: number;
+  pharmacyName?: string;
+  pharmacyCity?: string;
+}
+
+export interface AnonymousCartDisplay {
+  items: AnonymousCartDisplayItem[];
+  pharmacyName?: string;
+  pharmacyCity?: string;
+  subtotal: number;
+  total: number;
+  itemCount: number;
 }

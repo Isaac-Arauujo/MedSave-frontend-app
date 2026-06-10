@@ -32,8 +32,14 @@ export const OnePharmacyConflictModal = () => {
     >
       <p className="text-on-surface-variant">
         Seu carrinho possui itens de{' '}
-        <strong className="text-on-surface">{pharmacyConflict?.currentPharmacyName}</strong>.
-        Esvazie o carrinho para adicionar produtos de outra farmácia?
+        <strong className="text-on-surface">{pharmacyConflict?.currentPharmacyName}</strong>
+        {pharmacyConflict?.incomingPharmacyName ? (
+          <>
+            , mas o novo item é de{' '}
+            <strong className="text-on-surface">{pharmacyConflict.incomingPharmacyName}</strong>
+          </>
+        ) : null}
+        . Esvazie o carrinho para adicionar produtos de outra farmácia?
       </p>
     </Modal>
   );

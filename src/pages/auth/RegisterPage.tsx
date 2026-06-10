@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { Button } from '../../components/ui/Button';
@@ -31,6 +31,8 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const RegisterPage = () => {
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get('redirect');
   const { register: registerUser, isLoading } = useAuth();
   const {
     register,
@@ -50,7 +52,7 @@ export const RegisterPage = () => {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    await registerUser(data);
+    await registerUser(data, redirectPath);
   });
 
   return (

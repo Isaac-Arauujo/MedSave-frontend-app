@@ -4,11 +4,24 @@ import toast from 'react-hot-toast';
 import { create } from 'zustand';
 import * as cartApi from '../api/cartApi';
 import * as checkoutApi from '../api/checkoutApi';
-import { useCheckoutStore } from '../store/checkoutStore';
+import * as listingApi from '../api/listingApi';
 import { ROLES } from '../constants/roles';
+import { useAnonymousCartStore } from '../store/anonymousCartStore';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
-import type { PharmacyConflictState, CartResponse } from '../types/CartTypes';
+import { useCheckoutStore } from '../store/checkoutStore';
+import type {
+  AnonymousCartDisplay,
+  OnePharmacyCartConflictResponse,
+  PharmacyConflictState,
+} from '../types/CartTypes';
+import {
+  addAnonymousCartItem,
+  clearAnonymousCart,
+  getAnonymousCartItemsForMerge,
+  removeAnonymousCartItem,
+  updateAnonymousCartItemQuantity,
+} from '../utils/anonymousCartStorage';
 import { handleApiError } from '../utils/handleApiError';
 
 interface PharmacyConflictStore {
@@ -16,7 +29,17 @@ interface PharmacyConflictStore {
   setConflict: (conflict: PharmacyConflictState | null) => void;
 }
 
+interface MergeConflictStore {
+  conflict: OnePharmacyCartConflictResponse | null;
+  setConflict: (conflict: OnePharmacyCartConflictResponse | null) => void;
+}
+
 const usePharmacyConflictStore = create<PharmacyConflictStore>((set) => ({
+  conflict: null,
+  setConflict: (conflict) => set({ conflict }),
+}));
+
+export const useMergeConflictStore = create<MergeConflictStore>((set) => ({
   conflict: null,
   setConflict: (conflict) => set({ conflict }),
 }));
@@ -31,24 +54,97 @@ const isOnePharmacyError = (message: string): boolean => {
   );
 };
 
+export interface AddToCartInput {
+  listingId: number;
+  quantity: number;
+  pharmacyId?: number;
+  pharmacyName?: string;
+}
+
 export const useCart = () => {
   const { isAuthenticated, role } = useAuthStore();
   const isCustomer = isAuthenticated && role === ROLES.CUSTOMER;
+  const isGuest = !isAuthenticated;
 
   const cart = useCartStore((state) => state.cart);
-  const itemCount = useCartStore((state) => state.itemCount);
+  const backendItemCount = useCartStore((state) => state.itemCount);
   const setCart = useCartStore((state) => state.setCart);
   const clearCartStore = useCartStore((state) => state.clearCart);
 
+  const anonymousItemCount = useAnonymousCartStore((state) => state.itemCount);
+  const refreshAnonymousCart = useAnonymousCartStore((state) => state.refresh);
+
   const conflict = usePharmacyConflictStore((state) => state.conflict);
   const setConflict = usePharmacyConflictStore((state) => state.setConflict);
+  const mergeConflict = useMergeConflictStore((state) => state.conflict);
+  const setMergeConflict = useMergeConflictStore((state) => state.setConflict);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [anonymousDisplay, setAnonymousDisplay] = useState<AnonymousCartDisplay | null>(null);
+
+  const itemCount = isCustomer ? backendItemCount : anonymousItemCount;
+
+  const loadAnonymousDisplay = useCallback(async () => {
+    const localItems = getAnonymousCartItemsForMerge();
+    if (localItems.length === 0) {
+      setAnonymousDisplay(null);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const listingIds = localItems.map((item) => item.listingId);
+      const listings = await listingApi.getPublicListingsBatch(listingIds);
+      const listingMap = new Map(listings.map((listing) => [listing.id, listing]));
+
+      const items = localItems
+        .map((item) => {
+          const listing = listingMap.get(item.listingId);
+          if (!listing) {
+            return null;
+          }
+          const unitPrice = listing.discountPrice;
+          return {
+            listingId: item.listingId,
+            productName: listing.product.name,
+            firstImage: listing.product.images?.[0],
+            quantity: item.quantity,
+            unitPrice,
+            itemSubtotal: unitPrice * item.quantity,
+            maxQuantity: Math.max(1, listing.availableStock),
+            pharmacyName: listing.pharmacy.name,
+            pharmacyCity: listing.pharmacy.city,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+
+      const subtotal = items.reduce((sum, item) => sum + item.itemSubtotal, 0);
+
+      setAnonymousDisplay({
+        items,
+        pharmacyName: items[0]?.pharmacyName,
+        pharmacyCity: items[0]?.pharmacyCity,
+        subtotal,
+        total: subtotal,
+        itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+      });
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const fetchCart = useCallback(async () => {
     if (!isCustomer) {
-      clearCartStore();
+      if (isGuest) {
+        await loadAnonymousDisplay();
+      } else {
+        clearCartStore();
+      }
       return;
     }
 
@@ -66,15 +162,48 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isCustomer, clearCartStore, setCart]);
+  }, [isCustomer, isGuest, clearCartStore, setCart, loadAnonymousDisplay]);
 
   useEffect(() => {
     void fetchCart();
   }, [fetchCart]);
 
   const addItem = useCallback(
-    async (listingId: number, quantity: number) => {
-      if (!isCustomer) {
+    async ({ listingId, quantity, pharmacyId, pharmacyName }: AddToCartInput) => {
+      if (isAuthenticated && !isCustomer) {
+        toast.error('Apenas clientes podem adicionar produtos ao carrinho.');
+        return;
+      }
+
+      if (isGuest) {
+        if (!pharmacyId || !pharmacyName) {
+          toast.error('Não foi possível adicionar este item ao carrinho.');
+          return;
+        }
+
+        const pharmacyConflict = addAnonymousCartItem({
+          listingId,
+          quantity,
+          pharmacyId,
+          pharmacyName,
+        });
+        refreshAnonymousCart();
+
+        if (pharmacyConflict) {
+          setConflict({
+            listingId,
+            quantity,
+            pharmacyId,
+            pharmacyName,
+            currentPharmacyName: pharmacyConflict.currentPharmacyName,
+            incomingPharmacyName: pharmacyConflict.incomingPharmacyName,
+            source: 'anonymous',
+          });
+          return;
+        }
+
+        toast.success('Produto adicionado ao carrinho.');
+        await loadAnonymousDisplay();
         return;
       }
 
@@ -87,12 +216,12 @@ export const useCart = () => {
       } catch (err) {
         if (axios.isAxiosError(err) && [400, 422].includes(err.response?.status ?? 0)) {
           const message = handleApiError(err);
-
           if (isOnePharmacyError(message)) {
             setConflict({
               listingId,
               quantity,
               currentPharmacyName: cart?.pharmacyName ?? 'outra farmácia',
+              source: 'add',
             });
             return;
           }
@@ -106,7 +235,16 @@ export const useCart = () => {
         setIsSubmitting(false);
       }
     },
-    [isCustomer, setCart, cart?.pharmacyName, setConflict]
+    [
+      isAuthenticated,
+      isCustomer,
+      isGuest,
+      setCart,
+      cart?.pharmacyName,
+      setConflict,
+      refreshAnonymousCart,
+      loadAnonymousDisplay,
+    ]
   );
 
   const updateItem = useCallback(
@@ -133,6 +271,15 @@ export const useCart = () => {
     [isCustomer, setCart]
   );
 
+  const updateAnonymousItem = useCallback(
+    async (listingId: number, quantity: number) => {
+      updateAnonymousCartItemQuantity(listingId, quantity);
+      refreshAnonymousCart();
+      await loadAnonymousDisplay();
+    },
+    [refreshAnonymousCart, loadAnonymousDisplay]
+  );
+
   const removeItem = useCallback(
     async (itemId: number) => {
       if (!isCustomer) {
@@ -157,7 +304,25 @@ export const useCart = () => {
     [isCustomer, setCart]
   );
 
+  const removeAnonymousItem = useCallback(
+    async (listingId: number) => {
+      removeAnonymousCartItem(listingId);
+      refreshAnonymousCart();
+      await loadAnonymousDisplay();
+      toast.success('Item removido do carrinho.');
+    },
+    [refreshAnonymousCart, loadAnonymousDisplay]
+  );
+
   const clearCart = useCallback(async () => {
+    if (isGuest) {
+      clearAnonymousCart();
+      refreshAnonymousCart();
+      setAnonymousDisplay(null);
+      toast.success('Carrinho esvaziado.');
+      return;
+    }
+
     if (!isCustomer) {
       return;
     }
@@ -176,7 +341,7 @@ export const useCart = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isCustomer, clearCartStore]);
+  }, [isGuest, isCustomer, clearCartStore, refreshAnonymousCart]);
 
   const dismissPharmacyConflict = useCallback(() => {
     setConflict(null);
@@ -187,11 +352,30 @@ export const useCart = () => {
       return;
     }
 
-    const { listingId, quantity } = conflict;
+    const { listingId, quantity, source } = conflict;
 
     try {
       setIsSubmitting(true);
       setError(null);
+
+      if (source === 'anonymous') {
+        clearAnonymousCart();
+        refreshAnonymousCart();
+        if (conflict.pharmacyId && conflict.pharmacyName) {
+          addAnonymousCartItem({
+            listingId,
+            quantity,
+            pharmacyId: conflict.pharmacyId,
+            pharmacyName: conflict.pharmacyName,
+          });
+          refreshAnonymousCart();
+          await loadAnonymousDisplay();
+          toast.success('Carrinho atualizado com o novo item.');
+        }
+        setConflict(null);
+        return;
+      }
+
       await cartApi.clearCart();
       clearCartStore();
       const updatedCart = await cartApi.addItem({ listingId, quantity });
@@ -206,7 +390,45 @@ export const useCart = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [conflict, clearCartStore, setCart, setConflict]);
+  }, [conflict, clearCartStore, setCart, setConflict, refreshAnonymousCart, loadAnonymousDisplay]);
+
+  const dismissMergeConflict = useCallback(() => {
+    setMergeConflict(null);
+  }, [setMergeConflict]);
+
+  const keepAccountCartOnMergeConflict = useCallback(() => {
+    clearAnonymousCart();
+    refreshAnonymousCart();
+    setMergeConflict(null);
+    toast('Mantivemos o carrinho da sua conta.', { icon: 'ℹ️' });
+  }, [refreshAnonymousCart, setMergeConflict]);
+
+  const useAnonymousCartOnMergeConflict = useCallback(async () => {
+    if (!mergeConflict) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      await cartApi.clearCart();
+      clearCartStore();
+      const items = getAnonymousCartItemsForMerge();
+      const response = await cartApi.mergeCart({ items });
+      setCart(response.cart);
+      clearAnonymousCart();
+      refreshAnonymousCart();
+      setMergeConflict(null);
+      toast.success('Carrinho atualizado com os itens salvos.');
+    } catch (err) {
+      const message = handleApiError(err);
+      setError(message);
+      toast.error(message);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [mergeConflict, clearCartStore, setCart, refreshAnonymousCart, setMergeConflict]);
 
   const proceedToCheckout = useCallback(async () => {
     if (!isCustomer || !cart || cart.items.length === 0) {
@@ -231,18 +453,27 @@ export const useCart = () => {
 
   return {
     cart,
+    anonymousDisplay,
+    isGuest,
+    isCustomer,
     isLoading,
     isSubmitting,
     error,
     itemCount,
     pharmacyConflict: conflict,
+    mergeConflict,
     fetchCart,
     addItem,
     updateItem,
+    updateAnonymousItem,
     removeItem,
+    removeAnonymousItem,
     clearCart,
     proceedToCheckout,
     dismissPharmacyConflict,
     resolvePharmacyConflict,
+    dismissMergeConflict,
+    keepAccountCartOnMergeConflict,
+    useAnonymousCartOnMergeConflict,
   };
 };

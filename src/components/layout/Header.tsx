@@ -5,7 +5,7 @@ import { ROUTES } from '../../constants/routes';
 import { ROLES } from '../../constants/roles';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
-import { useCartStore } from '../../store/cartStore';
+import { useCart } from '../../hooks/useCart';
 import { getDashboardPath } from '../../utils/getDashboardPath';
 import { MiniCart } from '../shared/MiniCart';
 import { Button } from '../ui/Button';
@@ -15,8 +15,9 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [miniCartOpen, setMiniCartOpen] = useState(false);
   const { isAuthenticated, role } = useAuthStore();
-  const itemCount = useCartStore((state) => state.itemCount);
+  const { itemCount } = useCart();
   const isCustomer = isAuthenticated && role === ROLES.CUSTOMER;
+  const showCart = !isAuthenticated || isCustomer;
 
   const handleLogout = () => {
     logout();
@@ -81,7 +82,7 @@ export const Header = () => {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            {isCustomer && <CartIconButton />}
+            {showCart && <CartIconButton />}
             {isAuthenticated ? (
               <>
                 <Link to={dashboardPath}>
@@ -110,7 +111,7 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-1 md:hidden">
-            {isCustomer && <CartIconButton />}
+            {showCart && <CartIconButton />}
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-full p-2 text-on-surface"
@@ -181,7 +182,7 @@ export const Header = () => {
         </div>
       </header>
 
-      {isCustomer && <MiniCart isOpen={miniCartOpen} onClose={() => setMiniCartOpen(false)} />}
+      {showCart && <MiniCart isOpen={miniCartOpen} onClose={() => setMiniCartOpen(false)} />}
     </>
   );
 };

@@ -42,8 +42,13 @@ export const ListingsPage = () => {
     applyFilters({ name, category, city });
   };
 
-  const handleAddToCart = (listingId: number) => {
-    void addItem(listingId, 1);
+  const handleAddToCart = (listing: (typeof listings)[number]) => {
+    void addItem({
+      listingId: listing.id,
+      quantity: 1,
+      pharmacyId: listing.pharmacy.id,
+      pharmacyName: listing.pharmacy.name,
+    });
   };
 
   if (isLoading && listings.length === 0) {
@@ -119,7 +124,7 @@ export const ListingsPage = () => {
                 isAuthenticated={isAuthenticated}
                 isCustomer={isCustomer}
                 isSaved={isSaved(listing.id)}
-                onAddToCart={() => handleAddToCart(listing.id)}
+                onAddToCart={() => handleAddToCart(listing)}
                 onSave={() => void toggleSave(listing.id)}
               />
             ))}
