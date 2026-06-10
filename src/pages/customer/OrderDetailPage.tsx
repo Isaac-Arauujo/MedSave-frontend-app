@@ -130,6 +130,15 @@ export const OrderDetailPage = () => {
 
       {justCreated && <OrderConfirmationBanner order={toOrderResponse(order)} />}
 
+      {order.originalPrescriptionPickupRequired && (
+        <p
+          className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-[var(--color-warning)]"
+          role="status"
+        >
+          Retirada obrigatória com conferência da receita original.
+        </p>
+      )}
+
       <section className="mb-6 rounded-2xl border border-outline-variant bg-surface-container-lowest p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>

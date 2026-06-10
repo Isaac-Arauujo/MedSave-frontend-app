@@ -1,3 +1,16 @@
+export const PRESCRIPTION_TYPE_OPTIONS = [
+  { value: 'NONE', label: 'Sem receita' },
+  { value: 'SIMPLE', label: 'Receita simples' },
+  { value: 'ANTIBIOTIC', label: 'Antibiótico' },
+  { value: 'RETAINED', label: 'Receita retida' },
+  { value: 'CONTROLLED_C1', label: 'Controlado C1' },
+  { value: 'CONTROLLED_C5', label: 'Controlado C5' },
+  { value: 'CONTROLLED_OTHER', label: 'Controlado (outros)' },
+] as const;
+
+export const getPrescriptionTypeLabel = (type: string): string =>
+  PRESCRIPTION_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+
 export const PRESCRIPTION_REVIEW_STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pendente',
   UNDER_REVIEW: 'Em análise',

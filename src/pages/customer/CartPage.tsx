@@ -16,7 +16,7 @@ import { useAuthStore } from '../../store/authStore';
 import { getDashboardPath } from '../../utils/getDashboardPath';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { getImageUrl } from '../../utils/getImageUrl';
-import { itemRequiresPrescription } from '../../utils/prescriptionUtils';
+import { itemRequiresPrescription, cartHasOnlineSaleBlocked, isOnlineSaleBlocked, isPickupRequiredForPrescription } from '../../utils/prescriptionUtils';
 
 export const CartPage = () => {
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ export const CartPage = () => {
   } = useCart();
 
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const hasOnlineSaleBlocked = cart ? cartHasOnlineSaleBlocked(cart.items) : false;
 
   if (isAuthenticated && role !== ROLES.CUSTOMER) {
     return <Navigate to={getDashboardPath(role)} replace />;
@@ -300,6 +301,22 @@ export const CartPage = () => {
                         )}
                       </div>
                     )}
+                    {isOnlineSaleBlocked(item) && (
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Badge variant="danger">Indisponível para compra online</Badge>
+                        <p className="text-sm text-on-surface-variant">
+                          Remova este item para continuar.
+                        </p>
+                      </div>
+                    )}
+                    {isPickupRequiredForPrescription(item) && !isOnlineSaleBlocked(item) && (
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Badge variant="warning">Retirada obrigatória</Badge>
+                        <p className="text-sm text-on-surface-variant">
+                          Este item exige conferência da receita original na farmácia.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -357,9 +374,15 @@ export const CartPage = () => {
               className="w-full"
               onClick={() => void handleProceedToCheckout()}
               isLoading={isSubmitting}
+              disabled={hasOnlineSaleBlocked}
             >
               Ir para pagamento
             </Button>
+            {hasOnlineSaleBlocked && (
+              <p className="text-sm text-[var(--color-danger)]" role="alert">
+                Remova os itens indisponíveis para compra online antes de continuar.
+              </p>
+            )}
             <Button
               variant="secondary"
               className="w-full"

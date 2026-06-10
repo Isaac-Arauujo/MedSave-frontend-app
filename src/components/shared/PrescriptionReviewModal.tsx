@@ -244,6 +244,15 @@ export const PrescriptionReviewModal = ({
             </div>
           </div>
 
+          {review.requiresOriginalPrescriptionAtPickup && (
+            <p
+              className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-[var(--color-warning)]"
+              role="status"
+            >
+              Este medicamento exige conferência da receita original na retirada.
+            </p>
+          )}
+
           <div>
             <p className="mb-2 text-sm font-medium text-on-surface">Arquivo da receita</p>
             <p className="mb-3 text-sm text-on-surface-variant">

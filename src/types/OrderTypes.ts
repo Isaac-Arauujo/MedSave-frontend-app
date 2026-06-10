@@ -19,6 +19,8 @@ export interface OrderItemResponse {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  prescriptionType?: string;
+  requiresOriginalPrescriptionAtPickup?: boolean;
 }
 
 export interface OrderResponse {
@@ -102,6 +104,7 @@ export interface OrderDetailResponse {
   cancellationReason?: string;
   canceledAt?: string;
   refundNotice?: string;
+  originalPrescriptionPickupRequired?: boolean;
 }
 
 export interface OrderSummaryResponse {
@@ -137,13 +140,15 @@ export type OrderCreationErrorCode =
   | 'prescription_required'
   | 'prescription_pending'
   | 'prescription_rejected'
+  | 'prescription_fulfillment_blocked'
   | 'generic';
 
 export interface PrescriptionBlockedItem {
   listingId: number;
   productId: number;
   productName: string;
-  prescriptionStatus: string;
+  prescriptionStatus?: string;
+  prescriptionType?: string;
   rejectionReason?: string | null;
 }
 
@@ -152,6 +157,7 @@ export interface ParsedOrderCreationError {
   message: string;
   itemName?: string;
   prescriptionItems?: PrescriptionBlockedItem[];
+  fulfillmentCode?: string;
 }
 
 export const toOrderResponse = (detail: OrderDetailResponse): OrderResponse => ({

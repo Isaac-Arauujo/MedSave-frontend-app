@@ -23,6 +23,10 @@ export interface ProductResponse {
   requiresPrescription: boolean;
   prescriptionType?: PrescriptionType;
   requiresPharmacistReview?: boolean;
+  allowOnlineSale?: boolean;
+  allowDeliveryWithPrescription?: boolean;
+  allowPickupWithPrescription?: boolean;
+  requiresOriginalPrescriptionAtPickup?: boolean;
   images: string[];
   active: boolean;
 }
@@ -34,6 +38,10 @@ export interface CreateProductRequest {
   requiresPrescription: boolean;
   prescriptionType?: PrescriptionType;
   requiresPharmacistReview?: boolean;
+  allowOnlineSale?: boolean;
+  allowDeliveryWithPrescription?: boolean;
+  allowPickupWithPrescription?: boolean;
+  requiresOriginalPrescriptionAtPickup?: boolean;
   images: string[];
 }
 
@@ -44,6 +52,10 @@ export interface UpdateProductRequest {
   requiresPrescription?: boolean;
   prescriptionType?: PrescriptionType;
   requiresPharmacistReview?: boolean;
+  allowOnlineSale?: boolean;
+  allowDeliveryWithPrescription?: boolean;
+  allowPickupWithPrescription?: boolean;
+  requiresOriginalPrescriptionAtPickup?: boolean;
   images?: string[];
   active?: boolean;
 }

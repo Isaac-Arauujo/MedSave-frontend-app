@@ -51,6 +51,8 @@ export interface PharmacyPrescriptionReviewSummary {
   productName: string;
   listingId: number;
   productId: number;
+  prescriptionType?: string;
+  requiresOriginalPrescriptionAtPickup?: boolean;
   uploadedAt: string;
   reviewedAt?: string | null;
   rejectionReason?: string | null;

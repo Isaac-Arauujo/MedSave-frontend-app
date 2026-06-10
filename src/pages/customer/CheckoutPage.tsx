@@ -34,7 +34,12 @@ import { formatCpf } from '../../utils/formatCpf';
 import { formatCurrency } from '../../utils/formatCurrency';
 import {
   cartHasBlockingPrescriptions,
+  cartHasOnlineSaleBlocked,
+  cartBlocksDeliveryForPrescription,
+  cartRequiresPickupForPrescription,
   getPrescriptionItems,
+  ONLINE_SALE_BLOCKED_MESSAGE,
+  ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE,
 } from '../../utils/prescriptionUtils';
 
 const thirdPartyPickupSchema = z.object({
@@ -246,6 +251,12 @@ export const CheckoutPage = () => {
       return;
     }
 
+    if (blocksDeliveryForPrescription && selectedDeliveryType !== 'PICKUP') {
+      setDeliveryError(ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE);
+      toast.error(ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE);
+      return;
+    }
+
     let pickupPerson: UpdatePickupPersonRequest | undefined;
 
     if (selectedDeliveryType === 'PICKUP' && isThirdPartyPickup) {
@@ -325,7 +336,8 @@ export const CheckoutPage = () => {
       if (
         parsed.code === 'prescription_required' ||
         parsed.code === 'prescription_pending' ||
-        parsed.code === 'prescription_rejected'
+        parsed.code === 'prescription_rejected' ||
+        parsed.code === 'prescription_fulfillment_blocked'
       ) {
         setPrescriptionError(parsed.message);
         toast.error(parsed.message);
@@ -336,6 +348,26 @@ export const CheckoutPage = () => {
 
   const prescriptionItems = cart ? getPrescriptionItems(cart.items) : [];
   const hasBlockingPrescriptions = cart ? cartHasBlockingPrescriptions(cart.items) : false;
+  const hasOnlineSaleBlocked = cart ? cartHasOnlineSaleBlocked(cart.items) : false;
+  const requiresPrescriptionPickup = cart ? cartRequiresPickupForPrescription(cart.items) : false;
+  const blocksDeliveryForPrescription = cart ? cartBlocksDeliveryForPrescription(cart.items) : false;
+  const deliveryBlockedSelection =
+    blocksDeliveryForPrescription &&
+    selectedDeliveryType != null &&
+    selectedDeliveryType !== 'PICKUP';
+  const cannotFinalizeOrder =
+    hasBlockingPrescriptions || hasOnlineSaleBlocked || deliveryBlockedSelection;
+
+  useEffect(() => {
+    if (!requiresPrescriptionPickup || deliveryOptions.length === 0) {
+      return;
+    }
+
+    const pickupOption = deliveryOptions.find((option) => option.deliveryType === 'PICKUP');
+    if (pickupOption && selectedDeliveryType !== 'PICKUP') {
+      selectDeliveryOption('PICKUP', pickupOption.freight);
+    }
+  }, [requiresPrescriptionPickup, deliveryOptions, selectedDeliveryType, selectDeliveryOption]);
 
   const handleRemovePrescriptionItem = async (itemId: number) => {
     try {
@@ -416,6 +448,24 @@ export const CheckoutPage = () => {
           <div>
             <h2 className="mb-4 font-headline text-xl font-bold text-on-surface">Opções de entrega</h2>
 
+            {requiresPrescriptionPickup && (
+              <p
+                className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-[var(--color-warning)]"
+                role="alert"
+              >
+                {ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE}
+              </p>
+            )}
+
+            {hasOnlineSaleBlocked && (
+              <p
+                className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--color-danger)]"
+                role="alert"
+              >
+                {ONLINE_SALE_BLOCKED_MESSAGE} Remova o item bloqueado ou volte ao carrinho.
+              </p>
+            )}
+
             {isFreightLoading ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
@@ -439,7 +489,29 @@ export const CheckoutPage = () => {
                     estimateLabel={option.freight.estimateLabel}
                     estimateDays={option.freight.estimateDays}
                     isSelected={selectedDeliveryType === option.deliveryType}
-                    onSelect={() => selectDeliveryOption(option.deliveryType, option.freight)}
+                    disabled={
+                      hasOnlineSaleBlocked ||
+                      (blocksDeliveryForPrescription && option.deliveryType !== 'PICKUP')
+                    }
+                    disabledReason={
+                      hasOnlineSaleBlocked
+                        ? ONLINE_SALE_BLOCKED_MESSAGE
+                        : ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE
+                    }
+                    onSelect={() => {
+                      if (
+                        hasOnlineSaleBlocked ||
+                        (blocksDeliveryForPrescription && option.deliveryType !== 'PICKUP')
+                      ) {
+                        toast.error(
+                          hasOnlineSaleBlocked
+                            ? ONLINE_SALE_BLOCKED_MESSAGE
+                            : ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE
+                        );
+                        return;
+                      }
+                      selectDeliveryOption(option.deliveryType, option.freight);
+                    }}
                   />
                 ))}
               </div>
@@ -557,7 +629,7 @@ export const CheckoutPage = () => {
           )}
 
           <div className="flex justify-end">
-            <Button variant="primary" onClick={() => void handleDeliveryContinue()} isLoading={isSubmitting}>
+            <Button variant="primary" onClick={() => void handleDeliveryContinue()} isLoading={isSubmitting} disabled={hasOnlineSaleBlocked}>
               Continuar
             </Button>
           </div>
@@ -747,11 +819,21 @@ export const CheckoutPage = () => {
               variant="primary"
               onClick={() => void handlePlaceOrder()}
               isLoading={isSubmitting}
-              disabled={hasBlockingPrescriptions}
+              disabled={cannotFinalizeOrder}
             >
               Finalizar pedido
             </Button>
           </div>
+          {hasOnlineSaleBlocked && (
+            <p className="text-sm text-[var(--color-danger)]" role="alert">
+              {ONLINE_SALE_BLOCKED_MESSAGE} Remova o item para continuar.
+            </p>
+          )}
+          {deliveryBlockedSelection && (
+            <p className="text-sm text-[var(--color-danger)]" role="alert">
+              {ORIGINAL_PRESCRIPTION_PICKUP_MESSAGE}
+            </p>
+          )}
         </section>
       )}
 

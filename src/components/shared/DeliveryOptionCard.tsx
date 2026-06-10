@@ -13,6 +13,8 @@ interface DeliveryOptionCardProps {
   estimateLabel: string;
   estimateDays: number;
   isSelected: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
   onSelect: () => void;
 }
 
@@ -22,6 +24,8 @@ export const DeliveryOptionCard = ({
   estimateLabel,
   estimateDays,
   isSelected,
+  disabled = false,
+  disabledReason,
   onSelect,
 }: DeliveryOptionCardProps) => {
   const priceLabel = price === 0 ? 'Grátis' : formatCurrency(price);
@@ -31,12 +35,18 @@ export const DeliveryOptionCard = ({
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={disabled ? undefined : onSelect}
+      disabled={disabled}
+      aria-disabled={disabled}
+      title={disabled ? disabledReason : undefined}
       className={clsx(
         'flex w-full flex-col gap-3 rounded-2xl border p-4 text-left transition-colors',
-        isSelected
+        disabled && 'cursor-not-allowed opacity-60',
+        !disabled && isSelected
           ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-          : 'border-outline-variant bg-surface-container-lowest hover:bg-surface-container'
+          : !disabled
+            ? 'border-outline-variant bg-surface-container-lowest hover:bg-surface-container'
+            : 'border-outline-variant bg-surface-container-lowest'
       )}
     >
       <div className="flex items-start justify-between gap-3">
