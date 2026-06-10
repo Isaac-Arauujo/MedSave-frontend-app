@@ -16,6 +16,7 @@ import { AdminProductsPage } from '../pages/admin/AdminProductsPage';
 import { PharmacyDashboardPage } from '../pages/pharmacy/PharmacyDashboardPage';
 import { PharmacyListingsPage } from '../pages/pharmacy/PharmacyListingsPage';
 import { PharmacyOrdersPage } from '../pages/pharmacy/PharmacyOrdersPage';
+import { PharmacyPrescriptionsPage } from '../pages/pharmacy/PharmacyPrescriptionsPage';
 import { PharmacyProfilePage } from '../pages/pharmacy/PharmacyProfilePage';
 import { ListingDetailPage } from '../pages/public/ListingDetailPage';
 import { ListingsPage } from '../pages/public/ListingsPage';
@@ -163,6 +164,14 @@ export const AppRouter = () => (
           element={
             <PharmacyRoute>
               <PharmacyOrdersPage />
+            </PharmacyRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PHARMACY_PRESCRIPTIONS}
+          element={
+            <PharmacyRoute>
+              <PharmacyPrescriptionsPage />
             </PharmacyRoute>
           }
         />

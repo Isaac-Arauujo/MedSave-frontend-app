@@ -24,6 +24,7 @@ const pharmacyNav: NavItem[] = [
   { to: ROUTES.PHARMACY_DASHBOARD, label: 'Painel', icon: 'dashboard' },
   { to: ROUTES.PHARMACY_LISTINGS, label: 'Anúncios', icon: 'inventory_2' },
   { to: ROUTES.PHARMACY_ORDERS, label: 'Pedidos', icon: 'receipt_long' },
+  { to: ROUTES.PHARMACY_PRESCRIPTIONS, label: 'Receitas', icon: 'medication' },
   { to: ROUTES.PHARMACY_PROFILE, label: 'Perfil', icon: 'store' },
 ];
 

@@ -21,6 +21,7 @@ export const ROUTES = {
   PHARMACY_DASHBOARD: '/pharmacy/dashboard',
   PHARMACY_LISTINGS: '/pharmacy/listings',
   PHARMACY_ORDERS: '/pharmacy/orders',
+  PHARMACY_PRESCRIPTIONS: '/pharmacy/prescriptions',
   PHARMACY_PROFILE: '/pharmacy/profile',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_CUSTOMERS: '/admin/customers',
