@@ -1,3 +1,13 @@
+export type PrescriptionRequirementStatus =
+  | 'NOT_REQUIRED'
+  | 'REQUIRED_NOT_UPLOADED'
+  | 'PENDING'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED';
+
+export type PrescriptionType = 'SIMPLE' | 'CONTROLLED' | 'RETAINED';
+
 export interface CartItemResponse {
   itemId: number;
   listingId: number;
@@ -6,6 +16,12 @@ export interface CartItemResponse {
   quantity: number;
   unitPrice: number;
   itemSubtotal: number;
+  requiresPrescription?: boolean;
+  prescriptionType?: PrescriptionType;
+  requiresPharmacistReview?: boolean;
+  prescriptionStatus?: PrescriptionRequirementStatus;
+  prescriptionReviewId?: number;
+  prescriptionRejectionReason?: string;
 }
 
 export interface CartItemSummary {
