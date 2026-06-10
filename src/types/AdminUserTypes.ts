@@ -18,6 +18,12 @@ export interface CreateAdminUserRequest {
   sendWelcomeEmail?: boolean;
 }
 
+export interface UpdateAdminUserRequest {
+  name: string;
+  email: string;
+  role: AdminUserRole;
+}
+
 export interface CreateAdminUserResponse extends AdminUserResponse {
   welcomeEmailSent: boolean;
 }

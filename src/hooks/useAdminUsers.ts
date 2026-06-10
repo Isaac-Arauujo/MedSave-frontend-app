@@ -6,6 +6,7 @@ import type {
   AdminUserResponse,
   AdminUserRole,
   CreateAdminUserRequest,
+  UpdateAdminUserRequest,
 } from '../types/AdminUserTypes';
 import { handleApiError } from '../utils/handleApiError';
 
@@ -89,6 +90,63 @@ export const useAdminUsers = () => {
     [refetch]
   );
 
+  const updateUser = useCallback(
+    async (userId: number, data: UpdateAdminUserRequest) => {
+      try {
+        setIsSubmitting(true);
+        const response = await adminApi.updateUser(userId, data);
+        toast.success('Usuário atualizado com sucesso.');
+        await refetch();
+        return response;
+      } catch (err) {
+        const message = handleApiError(err);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [refetch]
+  );
+
+  const disableUser = useCallback(
+    async (userId: number) => {
+      try {
+        setIsSubmitting(true);
+        const response = await adminApi.disableUser(userId);
+        toast.success('Usuário desativado com sucesso.');
+        await refetch();
+        return response;
+      } catch (err) {
+        const message = handleApiError(err);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [refetch]
+  );
+
+  const enableUser = useCallback(
+    async (userId: number) => {
+      try {
+        setIsSubmitting(true);
+        const response = await adminApi.enableUser(userId);
+        toast.success('Usuário reativado com sucesso.');
+        await refetch();
+        return response;
+      } catch (err) {
+        const message = handleApiError(err);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [refetch]
+  );
+
   return {
     users,
     currentPage,
@@ -104,6 +162,9 @@ export const useAdminUsers = () => {
     applyRoleFilter,
     applyEnabledFilter,
     createUser,
+    updateUser,
+    disableUser,
+    enableUser,
     refetch,
   };
 };

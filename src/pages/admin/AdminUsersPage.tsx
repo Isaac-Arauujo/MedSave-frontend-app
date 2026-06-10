@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { CreateUserFormModal } from '../../components/shared/CreateUserFormModal';
+import { DisableUserConfirmModal } from '../../components/shared/DisableUserConfirmModal';
+import { EditUserFormModal } from '../../components/shared/EditUserFormModal';
+import { EnableUserConfirmModal } from '../../components/shared/EnableUserConfirmModal';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -9,20 +12,23 @@ import { Input } from '../../components/ui/Input';
 import { PageLoader } from '../../components/ui/PageLoader';
 import { Pagination } from '../../components/ui/Pagination';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
+import { useAuthStore } from '../../store/authStore';
 import {
   ADMIN_USER_ROLE_LABELS,
   ADMIN_USER_ROLE_OPTIONS,
+  type AdminUserResponse,
   type AdminUserRole,
 } from '../../types/AdminUserTypes';
 import { formatDateTime } from '../../utils/formatDate';
 
 const ENABLED_FILTER_OPTIONS: { value: 'all' | 'active' | 'inactive'; label: string }[] = [
-  { value: 'all', label: 'Todos os status' },
+  { value: 'all', label: 'Todos' },
   { value: 'active', label: 'Ativos' },
   { value: 'inactive', label: 'Inativos' },
 ];
 
 export const AdminUsersPage = () => {
+  const currentUserId = useAuthStore((state) => state.userId);
   const {
     users,
     currentPage,
@@ -37,11 +43,17 @@ export const AdminUsersPage = () => {
     applyRoleFilter,
     applyEnabledFilter,
     createUser,
+    updateUser,
+    disableUser,
+    enableUser,
     refetch,
   } = useAdminUsers();
 
   const [searchInput, setSearchInput] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<AdminUserResponse | null>(null);
+  const [disableTarget, setDisableTarget] = useState<AdminUserResponse | null>(null);
+  const [enableTarget, setEnableTarget] = useState<AdminUserResponse | null>(null);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -143,6 +155,9 @@ export const AdminUsersPage = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-on-surface-variant">
                   Criado em
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-on-surface-variant">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant bg-surface-container-lowest">
@@ -160,6 +175,39 @@ export const AdminUsersPage = () => {
                   </td>
                   <td className="px-4 py-3 text-sm text-on-surface-variant">
                     {formatDateTime(user.createdAt)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setEditTarget(user)}
+                      >
+                        Editar
+                      </Button>
+                      {user.enabled ? (
+                        currentUserId !== user.id && (
+                          <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setDisableTarget(user)}
+                          >
+                            Desativar
+                          </Button>
+                        )
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setEnableTarget(user)}
+                        >
+                          Reativar
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -180,6 +228,30 @@ export const AdminUsersPage = () => {
         onClose={() => setFormOpen(false)}
         isSubmitting={isSubmitting}
         onSubmit={createUser}
+      />
+
+      <EditUserFormModal
+        isOpen={Boolean(editTarget)}
+        user={editTarget}
+        onClose={() => setEditTarget(null)}
+        isSubmitting={isSubmitting}
+        onSubmit={updateUser}
+      />
+
+      <DisableUserConfirmModal
+        isOpen={Boolean(disableTarget)}
+        user={disableTarget}
+        onClose={() => setDisableTarget(null)}
+        isSubmitting={isSubmitting}
+        onConfirm={disableUser}
+      />
+
+      <EnableUserConfirmModal
+        isOpen={Boolean(enableTarget)}
+        user={enableTarget}
+        onClose={() => setEnableTarget(null)}
+        isSubmitting={isSubmitting}
+        onConfirm={enableUser}
       />
     </PageWrapper>
   );

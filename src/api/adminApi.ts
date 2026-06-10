@@ -4,6 +4,7 @@ import type {
   AdminUserResponse,
   CreateAdminUserRequest,
   CreateAdminUserResponse,
+  UpdateAdminUserRequest,
 } from '../types/AdminUserTypes';
 import type {
   CouponResponse,
@@ -83,6 +84,24 @@ export const createUser = async (
   data: CreateAdminUserRequest
 ): Promise<CreateAdminUserResponse> => {
   const response = await api.post<CreateAdminUserResponse>('/admin/users', data);
+  return response.data;
+};
+
+export const updateUser = async (
+  userId: number,
+  data: UpdateAdminUserRequest
+): Promise<AdminUserResponse> => {
+  const response = await api.put<AdminUserResponse>(`/admin/users/${userId}`, data);
+  return response.data;
+};
+
+export const disableUser = async (userId: number): Promise<AdminUserResponse> => {
+  const response = await api.patch<AdminUserResponse>(`/admin/users/${userId}/disable`);
+  return response.data;
+};
+
+export const enableUser = async (userId: number): Promise<AdminUserResponse> => {
+  const response = await api.patch<AdminUserResponse>(`/admin/users/${userId}/enable`);
   return response.data;
 };
 
