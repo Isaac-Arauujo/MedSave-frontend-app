@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { getImageUrl } from '../../utils/getImageUrl';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
+import { CartItemControls } from './CartItemControls';
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -28,8 +29,20 @@ const MiniCartSkeleton = () => (
 );
 
 export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
-  const { summary, anonymousDisplay, isGuest, isLoading, error, itemCount, refetch } =
-    useMiniCart(isOpen);
+  const {
+    summary,
+    anonymousDisplay,
+    isGuest,
+    isLoading,
+    error,
+    itemCount,
+    isSubmitting,
+    refetch,
+    updateItem,
+    updateAnonymousItem,
+    removeItem,
+    removeAnonymousItem,
+  } = useMiniCart(isOpen);
 
   useEffect(() => {
     if (!isOpen) {
@@ -52,7 +65,8 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
   }, [isOpen, onClose]);
 
   const guestItems = anonymousDisplay?.items ?? [];
-  const isEmpty = !isLoading && itemCount === 0;
+  const displayCount = isGuest ? (anonymousDisplay?.itemCount ?? itemCount) : itemCount;
+  const isEmpty = !isLoading && displayCount === 0;
 
   return (
     <>
@@ -79,7 +93,7 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
           <div>
             <h2 className="font-headline text-lg font-bold text-on-surface">Seu carrinho</h2>
             <p className="text-sm text-on-surface-variant">
-              {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+              {displayCount} {displayCount === 1 ? 'item' : 'itens'}
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar carrinho">
@@ -111,42 +125,8 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
               {guestItems.map((item) => {
                 const imageUrl = getImageUrl(item.firstImage);
                 return (
-                  <li key={item.listingId} className="flex gap-3 p-4">
-                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-container">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={item.productName}
-                          className="h-full w-full object-cover"
-                          width={48}
-                          height={48}
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-on-surface-variant">
-                          <span className="material-symbols-outlined text-xl" aria-hidden="true">
-                            medication
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-on-surface">{item.productName}</p>
-                      <p className="text-sm text-on-surface-variant">
-                        {item.quantity} × {formatCurrency(item.unitPrice)}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            summary && (
-              <ul className="divide-y divide-outline-variant">
-                {summary.items.map((item) => {
-                  const imageUrl = getImageUrl(item.firstImage);
-
-                  return (
-                    <li key={item.itemId} className="flex gap-3 p-4">
+                  <li key={item.listingId} className="flex flex-col gap-3 p-4 sm:flex-row">
+                    <div className="flex min-w-0 gap-3">
                       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-container">
                         {imageUrl ? (
                           <img
@@ -165,11 +145,83 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-on-surface">{item.productName}</p>
+                        <p className="break-words font-medium text-on-surface">{item.productName}</p>
+                        {item.pharmacyName && (
+                          <p className="text-sm text-on-surface-variant">{item.pharmacyName}</p>
+                        )}
                         <p className="text-sm text-on-surface-variant">
-                          {item.quantity} × {formatCurrency(item.unitPrice)}
+                          {formatCurrency(item.unitPrice)}
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-on-surface">
+                          Subtotal: {formatCurrency(item.itemSubtotal)}
                         </p>
                       </div>
+                    </div>
+                    <CartItemControls
+                      compact
+                      quantity={item.quantity}
+                      maxQuantity={item.maxQuantity}
+                      disabled={isSubmitting}
+                      onDecrease={() =>
+                        void updateAnonymousItem(item.listingId, item.quantity - 1, item.maxQuantity)
+                      }
+                      onIncrease={() =>
+                        void updateAnonymousItem(item.listingId, item.quantity + 1, item.maxQuantity)
+                      }
+                      onRemove={() => void removeAnonymousItem(item.listingId)}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            summary && (
+              <ul className="divide-y divide-outline-variant">
+                {summary.items.map((item) => {
+                  const imageUrl = getImageUrl(item.firstImage);
+
+                  return (
+                    <li key={item.itemId} className="flex flex-col gap-3 p-4 sm:flex-row">
+                      <div className="flex min-w-0 gap-3">
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-container">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={item.productName}
+                              className="h-full w-full object-cover"
+                              width={48}
+                              height={48}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-on-surface-variant">
+                              <span className="material-symbols-outlined text-xl" aria-hidden="true">
+                                medication
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words font-medium text-on-surface">{item.productName}</p>
+                          <p className="text-sm text-on-surface-variant">
+                            {item.quantity} × {formatCurrency(item.unitPrice)}
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-on-surface">
+                            Subtotal: {formatCurrency(item.unitPrice * item.quantity)}
+                          </p>
+                        </div>
+                      </div>
+                      <CartItemControls
+                        compact
+                        quantity={item.quantity}
+                        disabled={isSubmitting}
+                        onDecrease={() =>
+                          void updateItem(item.itemId, item.quantity - 1).then(() => refetch())
+                        }
+                        onIncrease={() =>
+                          void updateItem(item.itemId, item.quantity + 1).then(() => refetch())
+                        }
+                        onRemove={() => void removeItem(item.itemId).then(() => refetch())}
+                      />
                     </li>
                   );
                 })}
@@ -178,16 +230,24 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
           )}
         </div>
 
-        {!isLoading && !error && itemCount > 0 && (
+        {!isLoading && !error && displayCount > 0 && (
           <footer className="border-t border-outline-variant p-4">
             {isGuest && anonymousDisplay ? (
               <>
-                <div className="mb-4 flex justify-between text-base">
-                  <span className="font-semibold text-on-surface">Total</span>
-                  <span className="font-headline font-bold text-primary">
-                    {formatCurrency(anonymousDisplay.total)}
-                  </span>
-                </div>
+                <dl className="mb-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-on-surface-variant">Subtotal</dt>
+                    <dd className="font-medium text-on-surface">
+                      {formatCurrency(anonymousDisplay.subtotal)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between border-t border-outline-variant pt-2 text-base">
+                    <dt className="font-semibold text-on-surface">Total</dt>
+                    <dd className="font-headline font-bold text-primary">
+                      {formatCurrency(anonymousDisplay.total)}
+                    </dd>
+                  </div>
+                </dl>
                 <div className="flex flex-col gap-2">
                   <Link to={ROUTES.CART} onClick={onClose}>
                     <Button variant="secondary" className="w-full">
@@ -199,7 +259,7 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
                     onClick={onClose}
                   >
                     <Button variant="primary" className="w-full">
-                      Entrar para finalizar
+                      Ir para pagamento
                     </Button>
                   </Link>
                 </div>
@@ -236,7 +296,7 @@ export const MiniCart = ({ isOpen, onClose }: MiniCartProps) => {
                     </Link>
                     <Link to={ROUTES.CHECKOUT} onClick={onClose}>
                       <Button variant="primary" className="w-full">
-                        Ir para checkout
+                        Ir para pagamento
                       </Button>
                     </Link>
                   </div>

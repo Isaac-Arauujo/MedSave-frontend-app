@@ -4,14 +4,12 @@ import toast from 'react-hot-toast';
 import { create } from 'zustand';
 import * as cartApi from '../api/cartApi';
 import * as checkoutApi from '../api/checkoutApi';
-import * as listingApi from '../api/listingApi';
 import { ROLES } from '../constants/roles';
 import { useAnonymousCartStore } from '../store/anonymousCartStore';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useCheckoutStore } from '../store/checkoutStore';
 import type {
-  AnonymousCartDisplay,
   OnePharmacyCartConflictResponse,
   PharmacyConflictState,
 } from '../types/CartTypes';
@@ -72,7 +70,12 @@ export const useCart = () => {
   const clearCartStore = useCartStore((state) => state.clearCart);
 
   const anonymousItemCount = useAnonymousCartStore((state) => state.itemCount);
+  const anonymousDisplay = useAnonymousCartStore((state) => state.display);
+  const anonymousDisplayLoading = useAnonymousCartStore((state) => state.displayLoading);
+  const anonymousDisplayError = useAnonymousCartStore((state) => state.displayError);
   const refreshAnonymousCart = useAnonymousCartStore((state) => state.refresh);
+  const loadAnonymousDisplay = useAnonymousCartStore((state) => state.loadDisplay);
+  const clearAnonymousDisplay = useAnonymousCartStore((state) => state.clearDisplay);
 
   const conflict = usePharmacyConflictStore((state) => state.conflict);
   const setConflict = usePharmacyConflictStore((state) => state.setConflict);
@@ -82,61 +85,8 @@ export const useCart = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [anonymousDisplay, setAnonymousDisplay] = useState<AnonymousCartDisplay | null>(null);
 
   const itemCount = isCustomer ? backendItemCount : anonymousItemCount;
-
-  const loadAnonymousDisplay = useCallback(async () => {
-    const localItems = getAnonymousCartItemsForMerge();
-    if (localItems.length === 0) {
-      setAnonymousDisplay(null);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      const listingIds = localItems.map((item) => item.listingId);
-      const listings = await listingApi.getPublicListingsBatch(listingIds);
-      const listingMap = new Map(listings.map((listing) => [listing.id, listing]));
-
-      const items = localItems
-        .map((item) => {
-          const listing = listingMap.get(item.listingId);
-          if (!listing) {
-            return null;
-          }
-          const unitPrice = listing.discountPrice;
-          return {
-            listingId: item.listingId,
-            productName: listing.product.name,
-            firstImage: listing.product.images?.[0],
-            quantity: item.quantity,
-            unitPrice,
-            itemSubtotal: unitPrice * item.quantity,
-            maxQuantity: Math.max(1, listing.availableStock),
-            pharmacyName: listing.pharmacy.name,
-            pharmacyCity: listing.pharmacy.city,
-          };
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
-
-      const subtotal = items.reduce((sum, item) => sum + item.itemSubtotal, 0);
-
-      setAnonymousDisplay({
-        items,
-        pharmacyName: items[0]?.pharmacyName,
-        pharmacyCity: items[0]?.pharmacyCity,
-        subtotal,
-        total: subtotal,
-        itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
-      });
-    } catch (err) {
-      setError(handleApiError(err));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   const fetchCart = useCallback(async () => {
     if (!isCustomer) {
@@ -144,6 +94,7 @@ export const useCart = () => {
         await loadAnonymousDisplay();
       } else {
         clearCartStore();
+        clearAnonymousDisplay();
       }
       return;
     }
@@ -162,7 +113,7 @@ export const useCart = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isCustomer, isGuest, clearCartStore, setCart, loadAnonymousDisplay]);
+  }, [isCustomer, isGuest, clearCartStore, setCart, loadAnonymousDisplay, clearAnonymousDisplay]);
 
   useEffect(() => {
     void fetchCart();
@@ -247,39 +198,6 @@ export const useCart = () => {
     ]
   );
 
-  const updateItem = useCallback(
-    async (itemId: number, quantity: number) => {
-      if (!isCustomer) {
-        return;
-      }
-
-      try {
-        setIsSubmitting(true);
-        setError(null);
-        const updatedCart = await cartApi.updateItem(itemId, { quantity });
-        setCart(updatedCart);
-        toast.success('Carrinho atualizado.');
-      } catch (err) {
-        const message = handleApiError(err);
-        setError(message);
-        toast.error(message);
-        throw err;
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [isCustomer, setCart]
-  );
-
-  const updateAnonymousItem = useCallback(
-    async (listingId: number, quantity: number) => {
-      updateAnonymousCartItemQuantity(listingId, quantity);
-      refreshAnonymousCart();
-      await loadAnonymousDisplay();
-    },
-    [refreshAnonymousCart, loadAnonymousDisplay]
-  );
-
   const removeItem = useCallback(
     async (itemId: number) => {
       if (!isCustomer) {
@@ -304,6 +222,56 @@ export const useCart = () => {
     [isCustomer, setCart]
   );
 
+  const updateItem = useCallback(
+    async (itemId: number, quantity: number) => {
+      if (!isCustomer) {
+        return;
+      }
+
+      if (quantity < 1) {
+        await removeItem(itemId);
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        setError(null);
+        const updatedCart = await cartApi.updateItem(itemId, { quantity });
+        setCart(updatedCart);
+      } catch (err) {
+        const message = handleApiError(err);
+        setError(message);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [isCustomer, setCart, removeItem]
+  );
+
+  const updateAnonymousItem = useCallback(
+    async (listingId: number, quantity: number, maxQuantity?: number) => {
+      if (maxQuantity !== undefined && quantity > maxQuantity) {
+        toast('Quantidade máxima disponível atingida.');
+        return;
+      }
+
+      if (quantity < 1) {
+        removeAnonymousCartItem(listingId);
+        refreshAnonymousCart();
+        await loadAnonymousDisplay();
+        toast.success('Item removido do carrinho.');
+        return;
+      }
+
+      updateAnonymousCartItemQuantity(listingId, quantity);
+      refreshAnonymousCart();
+      await loadAnonymousDisplay();
+    },
+    [refreshAnonymousCart, loadAnonymousDisplay]
+  );
+
   const removeAnonymousItem = useCallback(
     async (listingId: number) => {
       removeAnonymousCartItem(listingId);
@@ -318,7 +286,7 @@ export const useCart = () => {
     if (isGuest) {
       clearAnonymousCart();
       refreshAnonymousCart();
-      setAnonymousDisplay(null);
+      clearAnonymousDisplay();
       toast.success('Carrinho esvaziado.');
       return;
     }
@@ -341,7 +309,7 @@ export const useCart = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isGuest, isCustomer, clearCartStore, refreshAnonymousCart]);
+  }, [isGuest, isCustomer, clearCartStore, refreshAnonymousCart, clearAnonymousDisplay]);
 
   const dismissPharmacyConflict = useCallback(() => {
     setConflict(null);
@@ -370,7 +338,7 @@ export const useCart = () => {
           });
           refreshAnonymousCart();
           await loadAnonymousDisplay();
-          toast.success('Carrinho atualizado com o novo item.');
+          toast.success('Carrinho atualizado.');
         }
         setConflict(null);
         return;
@@ -381,7 +349,7 @@ export const useCart = () => {
       const updatedCart = await cartApi.addItem({ listingId, quantity });
       setCart(updatedCart);
       setConflict(null);
-      toast.success('Carrinho atualizado com o novo item.');
+      toast.success('Carrinho atualizado.');
     } catch (err) {
       const message = handleApiError(err);
       setError(message);
@@ -456,9 +424,9 @@ export const useCart = () => {
     anonymousDisplay,
     isGuest,
     isCustomer,
-    isLoading,
+    isLoading: isCustomer ? isLoading : anonymousDisplayLoading,
     isSubmitting,
-    error,
+    error: error ?? anonymousDisplayError,
     itemCount,
     pharmacyConflict: conflict,
     mergeConflict,

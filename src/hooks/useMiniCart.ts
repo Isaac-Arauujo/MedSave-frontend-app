@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import * as cartApi from '../api/cartApi';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
@@ -14,8 +13,19 @@ export const useMiniCart = (isOpen: boolean) => {
   const { isAuthenticated, role } = useAuthStore();
   const isCustomer = isAuthenticated && role === ROLES.CUSTOMER;
   const isGuest = !isAuthenticated;
-  const { itemCount, anonymousDisplay } = useCart();
+  const {
+    itemCount,
+    anonymousDisplay,
+    isSubmitting,
+    updateItem,
+    updateAnonymousItem,
+    removeItem,
+    removeAnonymousItem,
+  } = useCart();
   const anonymousItemCount = useAnonymousCartStore((state) => state.itemCount);
+  const loadAnonymousDisplay = useAnonymousCartStore((state) => state.loadDisplay);
+  const anonymousDisplayLoading = useAnonymousCartStore((state) => state.displayLoading);
+  const anonymousDisplayError = useAnonymousCartStore((state) => state.displayError);
 
   const [summary, setSummary] = useState<CartSummaryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,17 +60,24 @@ export const useMiniCart = (isOpen: boolean) => {
 
     if (isCustomer) {
       void fetchSummary();
+    } else if (isGuest) {
+      void loadAnonymousDisplay();
     }
-  }, [isOpen, isCustomer, itemCount, fetchSummary]);
+  }, [isOpen, isCustomer, isGuest, itemCount, fetchSummary, loadAnonymousDisplay]);
 
   return {
     summary,
     anonymousDisplay: isGuest ? anonymousDisplay : null,
     isGuest,
-    isLoading,
-    error,
+    isLoading: isCustomer ? isLoading : anonymousDisplayLoading,
+    error: isGuest ? anonymousDisplayError : error,
     itemCount: isCustomer ? itemCount : anonymousItemCount,
-    refetch: fetchSummary,
+    isSubmitting,
+    refetch: isCustomer ? fetchSummary : loadAnonymousDisplay,
     cartPath: ROUTES.CART,
+    updateItem,
+    updateAnonymousItem,
+    removeItem,
+    removeAnonymousItem,
   };
 };

@@ -15,22 +15,29 @@ export const OnePharmacyConflictModal = () => {
       isOpen={Boolean(pharmacyConflict)}
       onClose={dismissPharmacyConflict}
       title="Itens de uma única farmácia"
+      size="sm"
       footer={
         <>
-          <Button variant="secondary" onClick={dismissPharmacyConflict} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={dismissPharmacyConflict}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button
             variant="primary"
+            className="w-full sm:w-auto"
             onClick={() => void resolvePharmacyConflict()}
             isLoading={isSubmitting}
           >
-            Limpar e adicionar
+            Limpar carrinho e adicionar
           </Button>
         </>
       }
     >
-      <p className="text-on-surface-variant">
+      <p className="break-words text-on-surface-variant">
         Seu carrinho possui itens de{' '}
         <strong className="text-on-surface">{pharmacyConflict?.currentPharmacyName}</strong>
         {pharmacyConflict?.incomingPharmacyName ? (
@@ -39,7 +46,10 @@ export const OnePharmacyConflictModal = () => {
             <strong className="text-on-surface">{pharmacyConflict.incomingPharmacyName}</strong>
           </>
         ) : null}
-        . Esvazie o carrinho para adicionar produtos de outra farmácia?
+        .
+      </p>
+      <p className="mt-3 break-words text-on-surface-variant">
+        Para adicionar este produto, será necessário limpar o carrinho atual.
       </p>
     </Modal>
   );

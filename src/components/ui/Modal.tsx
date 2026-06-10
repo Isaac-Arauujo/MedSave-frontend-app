@@ -69,10 +69,10 @@ export const Modal = ({
   return (
     <div
       className={clsx(
-        'fixed inset-0 z-50 flex',
+        'fixed inset-0 z-[60] flex',
         isSheet
           ? 'items-end justify-center p-2 sm:items-center sm:p-4'
-          : 'items-center justify-center p-2 sm:p-4'
+          : 'items-center justify-center p-3 sm:p-4'
       )}
       role="presentation"
       onClick={(event) => {
@@ -93,7 +93,7 @@ export const Modal = ({
           'max-h-[calc(100dvh-1rem)] max-w-[calc(100vw-1rem)] sm:max-h-[90vh]',
           isSheet
             ? 'h-[100dvh] rounded-t-2xl sm:h-auto sm:max-w-none sm:rounded-2xl'
-            : 'rounded-2xl sm:max-w-none',
+            : 'rounded-2xl',
           sizeClasses[size]
         )}
         onClick={(event) => event.stopPropagation()}
@@ -122,7 +122,7 @@ export const Modal = ({
         </div>
 
         {footer && (
-          <div className="shrink-0 border-t border-outline-variant px-4 py-3 sm:px-6 sm:pb-4">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-outline-variant px-4 py-3 sm:flex-row sm:justify-end sm:px-6 sm:pb-4">
             {footer}
           </div>
         )}
