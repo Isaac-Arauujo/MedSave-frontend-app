@@ -2,6 +2,7 @@ import type { PageResponse, PaginationParams } from '../types/CommonTypes';
 import type { ListingRecommendationsResponse } from '../types/ListingRecommendationsTypes';
 import type {
   CreateListingRequest,
+  ListingImportResultResponse,
   ListingResponse,
   UpdateListingRequest,
 } from '../types/ListingTypes';
@@ -69,4 +70,31 @@ export const updateListing = async (
 
 export const deleteListing = async (id: number): Promise<void> => {
   await api.delete(`/pharmacy/listings/${id}`);
+};
+
+export const importListingsCsv = async (file: File): Promise<ListingImportResultResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post<ListingImportResultResponse>(
+    '/pharmacy/listings/import-csv',
+    formData,
+    {
+      headers: { 'Content-Type': undefined },
+    }
+  );
+  return response.data;
+};
+
+export const downloadListingImportTemplate = async (): Promise<void> => {
+  const response = await api.get<Blob>('/pharmacy/listings/import-template', {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(response.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'medisave-listings-template.csv';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };

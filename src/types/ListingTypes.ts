@@ -48,3 +48,26 @@ export interface UpdateListingRequest {
   stock?: number;
   active?: boolean;
 }
+
+export type ListingImportStatus = 'CREATED' | 'UPDATED' | 'ERROR';
+
+export interface ListingImportRowResult {
+  line: number;
+  ean?: string;
+  productId?: number;
+  productName?: string;
+  batchNumber?: string;
+  expirationDate?: string;
+  status: ListingImportStatus;
+  listingId?: number;
+  code?: string | null;
+  message?: string;
+}
+
+export interface ListingImportResultResponse {
+  totalRows: number;
+  createdCount: number;
+  updatedCount: number;
+  errorCount: number;
+  rows: ListingImportRowResult[];
+}

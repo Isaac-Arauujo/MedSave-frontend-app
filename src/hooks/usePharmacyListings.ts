@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import * as listingApi from '../api/listingApi';
 import type {
   CreateListingRequest,
+  ListingImportResultResponse,
   ListingResponse,
   UpdateListingRequest,
 } from '../types/ListingTypes';
@@ -16,6 +17,7 @@ export const usePharmacyListings = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
@@ -109,6 +111,26 @@ export const usePharmacyListings = () => {
     [refetch]
   );
 
+  const importListingsCsv = useCallback(
+    async (file: File): Promise<ListingImportResultResponse> => {
+      try {
+        setIsImporting(true);
+        setError(null);
+        const result = await listingApi.importListingsCsv(file);
+        await refetch();
+        return result;
+      } catch (err) {
+        const message = handleApiError(err);
+        setError(message);
+        toast.error(message);
+        throw err;
+      } finally {
+        setIsImporting(false);
+      }
+    },
+    [refetch]
+  );
+
   const deleteListing = useCallback(
     async (id: number) => {
       try {
@@ -135,10 +157,12 @@ export const usePharmacyListings = () => {
     totalPages,
     isLoading,
     isSubmitting,
+    isImporting,
     error,
     setCurrentPage,
     createListing,
     updateListing,
+    importListingsCsv,
     deleteListing,
     refetch,
   };

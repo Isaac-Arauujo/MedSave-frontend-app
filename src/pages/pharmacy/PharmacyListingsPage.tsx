@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { PharmacyListingFormModal } from '../../components/shared/PharmacyListingFormModal';
+import { PharmacyListingImportModal } from '../../components/shared/PharmacyListingImportModal';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -22,15 +23,18 @@ export const PharmacyListingsPage = () => {
     totalPages,
     isLoading,
     isSubmitting,
+    isImporting,
     error,
     setCurrentPage,
     createListing,
     updateListing,
+    importListingsCsv,
     deleteListing,
     refetch,
   } = usePharmacyListings();
 
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<ListingResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ListingResponse | null>(null);
 
@@ -86,7 +90,10 @@ export const PharmacyListingsPage = () => {
       title="Meus anúncios"
       description="Gerencie os produtos disponíveis na sua farmácia."
     >
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex flex-wrap justify-end gap-2">
+        <Button variant="secondary" onClick={() => setImportOpen(true)}>
+          Importar CSV
+        </Button>
         <Button variant="primary" onClick={handleOpenCreate}>
           Novo anúncio
         </Button>
@@ -241,6 +248,13 @@ export const PharmacyListingsPage = () => {
         initialListing={editingListing ?? undefined}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
+      />
+
+      <PharmacyListingImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={importListingsCsv}
+        isSubmitting={isImporting}
       />
 
       <Modal
