@@ -9,12 +9,12 @@ export const handleApiError = (error: unknown): string => {
       | undefined;
 
     if (data && typeof data === 'object') {
-      if ('error' in data && data.error) {
-        return String(data.error);
-      }
-
       if ('message' in data && data.message) {
         return String(data.message);
+      }
+
+      if ('error' in data && data.error) {
+        return String(data.error);
       }
 
       if ('fieldErrors' in data && data.fieldErrors) {

@@ -21,6 +21,7 @@ import {
   updateAnonymousCartItemQuantity,
 } from '../utils/anonymousCartStorage';
 import { handleApiError } from '../utils/handleApiError';
+import { parseCartError } from '../utils/parseCartError';
 
 interface PharmacyConflictStore {
   conflict: PharmacyConflictState | null;
@@ -165,8 +166,22 @@ export const useCart = () => {
         setCart(updatedCart);
         toast.success('Produto adicionado ao carrinho.');
       } catch (err) {
+        const parsed = parseCartError(err);
+
+        if (parsed.pharmacyConflict) {
+          setConflict({
+            listingId,
+            quantity,
+            currentPharmacyName:
+              parsed.pharmacyConflict.currentPharmacyName ?? cart?.pharmacyName ?? 'outra farmácia',
+            incomingPharmacyName: parsed.pharmacyConflict.incomingPharmacyName,
+            source: 'add',
+          });
+          return;
+        }
+
         if (axios.isAxiosError(err) && [400, 422].includes(err.response?.status ?? 0)) {
-          const message = handleApiError(err);
+          const message = parsed.message;
           if (isOnePharmacyError(message)) {
             setConflict({
               listingId,
@@ -178,9 +193,8 @@ export const useCart = () => {
           }
         }
 
-        const message = handleApiError(err);
-        setError(message);
-        toast.error(message);
+        setError(parsed.message);
+        toast.error(parsed.message);
         throw err;
       } finally {
         setIsSubmitting(false);

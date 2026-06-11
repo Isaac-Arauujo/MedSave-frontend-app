@@ -9,6 +9,7 @@ import { PageWrapper } from '../../components/layout/PageWrapper';
 import { AddressFormModal } from '../../components/shared/AddressFormModal';
 import { DeliveryOptionCard } from '../../components/shared/DeliveryOptionCard';
 import { PrescriptionUploadCard } from '../../components/shared/PrescriptionUploadCard';
+import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
