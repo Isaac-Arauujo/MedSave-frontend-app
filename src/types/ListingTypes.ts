@@ -26,12 +26,14 @@ export interface ListingResponse {
   discountPrice: number;
   discountPercent: number;
   expirationDate: string;
+  batchNumber?: string;
   availableStock: number;
   active: boolean;
 }
 
 export interface CreateListingRequest {
   productId: number;
+  batchNumber: string;
   originalPrice: number;
   discountPrice: number;
   expirationDate: string;
@@ -39,6 +41,7 @@ export interface CreateListingRequest {
 }
 
 export interface UpdateListingRequest {
+  batchNumber?: string;
   originalPrice?: number;
   discountPrice?: number;
   expirationDate?: string;

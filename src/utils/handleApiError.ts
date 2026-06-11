@@ -5,7 +5,12 @@ export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as
       | ApiError
-      | { message?: string; error?: string; fieldErrors?: Record<string, string> }
+      | {
+          message?: string;
+          error?: string;
+          code?: string;
+          fieldErrors?: Record<string, string>;
+        }
       | undefined;
 
     if (data && typeof data === 'object') {
