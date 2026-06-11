@@ -148,9 +148,15 @@ export const PharmacyListingImportModal = ({
       <div className="space-y-5">
         <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-600">
           <li>Baixe o modelo CSV.</li>
-          <li>Preencha EAN, preço, estoque, validade e lote.</li>
-          <li>Envie o arquivo para criar ou atualizar anúncios.</li>
+          <li>Abra o arquivo no Excel ou Google Sheets.</li>
+          <li>Preencha uma linha para cada produto/lote.</li>
+          <li>Salve o arquivo como CSV.</li>
+          <li>Envie o CSV aqui para criar ou atualizar anúncios.</li>
         </ol>
+
+        <p className="text-sm text-gray-600">
+          Dica: o modelo usa ponto e vírgula para abrir melhor em colunas no Excel.
+        </p>
 
         <div className="flex flex-wrap gap-2">
           <Button
@@ -158,10 +164,10 @@ export const PharmacyListingImportModal = ({
             onClick={() => void handleDownloadTemplate()}
             isLoading={isDownloadingTemplate}
           >
-            Baixar modelo CSV
+            Baixar modelo CSV para Excel
           </Button>
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
-            Selecionar arquivo
+            Selecionar CSV para importar
           </Button>
           <input
             ref={fileInputRef}
