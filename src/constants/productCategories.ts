@@ -5,7 +5,8 @@ export const PRODUCT_CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: 'ANTIBIOTIC', label: 'Antibiótico' },
   { value: 'ANTIHYPERTENSIVE', label: 'Anti-hipertensivo' },
   { value: 'VITAMIN', label: 'Vitamina' },
-  { value: 'DERMATOLOGICAL', label: 'Dermatológico' },
+  { value: 'DERMATOLOGY', label: 'Dermatológico' },
+  { value: 'OTHER', label: 'Outro' },
 ];
 
 export const getCategoryLabel = (category: ProductCategory): string =>
