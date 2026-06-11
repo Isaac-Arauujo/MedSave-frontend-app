@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { differenceInSeconds, parseISO } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
 import { PageWrapper } from '../../components/layout/PageWrapper';
@@ -96,6 +96,9 @@ const StepIndicator = ({ currentStep }: { currentStep: CheckoutStep }) => {
 
 export const CheckoutPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const resumePrescription = searchParams.get('resume') === 'prescription';
+  const resumeReviewId = searchParams.get('reviewId');
   const { cart, fetchCart, removeItem } = useCart();
   const { profile } = useProfile();
   const { addresses, isLoading: isAddressesLoading, createAddress, refetch: refetchAddresses } =
@@ -147,6 +150,7 @@ export const CheckoutPage = () => {
   });
 
   const checkoutBootstrappedRef = useRef(false);
+  const resumeHandledRef = useRef(false);
 
   useEffect(() => {
     if (checkoutBootstrappedRef.current) {
@@ -222,9 +226,28 @@ export const CheckoutPage = () => {
     }
   }, [addresses, selectedAddressId]);
 
-  const handleExpiredRedirect = () => {
+  useEffect(() => {
+    if (!resumePrescription || !cart || cart.items.length === 0 || resumeHandledRef.current) {
+      return;
+    }
+
+    resumeHandledRef.current = true;
+    goToStep('review');
+  }, [resumePrescription, cart, goToStep]);
+
+  const handleExpiredRedirect = async () => {
     setExpiredModalOpen(false);
-    navigate(ROUTES.CART);
+    checkoutBootstrappedRef.current = false;
+    resumeHandledRef.current = false;
+    try {
+      await initializeSession();
+      await fetchCart();
+      if (resumePrescription) {
+        goToStep('review');
+      }
+    } catch {
+      navigate(ROUTES.CART);
+    }
   };
 
   const handleAddressFormSubmit = async (data: CreateAddressRequest, setAsDefault: boolean) => {
@@ -413,7 +436,7 @@ export const CheckoutPage = () => {
       <PageWrapper title="Checkout">
         <EmptyState
           title="Carrinho vazio"
-          description="Adicione itens ao carrinho antes de finalizar a compra."
+          description="Não encontramos itens no seu carrinho. Adicione o produto novamente ou entre em contato com o suporte."
           action={
             <Link to={ROUTES.LISTINGS}>
               <Button variant="primary">Ver anúncios</Button>
@@ -679,6 +702,15 @@ export const CheckoutPage = () => {
                 </p>
               </div>
 
+              {resumePrescription && (
+                <p
+                  className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-on-surface"
+                  role="status"
+                >
+                  Retome sua compra aqui. Seus itens e o status da receita foram mantidos.
+                </p>
+              )}
+
               {hasBlockingPrescriptions && (
                 <p
                   className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
@@ -704,6 +736,12 @@ export const CheckoutPage = () => {
                     key={item.itemId}
                     item={item}
                     checkoutSessionToken={session?.sessionToken}
+                    resumeFromEmail={
+                      resumePrescription &&
+                      item.prescriptionStatus === 'APPROVED' &&
+                      (resumeReviewId == null ||
+                        String(item.prescriptionReviewId) === resumeReviewId)
+                    }
                     onUploadSuccess={handlePrescriptionUploadSuccess}
                     onRemoveItem={() => handleRemovePrescriptionItem(item.itemId)}
                     isRemoving={removingItemId === item.itemId}
@@ -856,13 +894,19 @@ export const CheckoutPage = () => {
         onClose={handleExpiredRedirect}
         title="Sessão expirada"
         footer={
-          <Button variant="primary" onClick={handleExpiredRedirect}>
-            Ir para o carrinho
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="secondary" onClick={() => navigate(ROUTES.CART)}>
+              Ir para o carrinho
+            </Button>
+            <Button variant="primary" onClick={() => void handleExpiredRedirect()}>
+              Continuar checkout
+            </Button>
+          </div>
         }
       >
         <p className="text-on-surface-variant">
-          Sua sessão de checkout expirou. Você será redirecionado para o carrinho.
+          Sua sessão de checkout expirou, mas sua compra foi mantida. Você pode continuar de onde
+          parou ou voltar ao carrinho.
         </p>
       </Modal>
     </PageWrapper>

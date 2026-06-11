@@ -7,6 +7,7 @@ import type {
   PrescriptionReviewApproveRequest,
   PrescriptionReviewRejectRequest,
   PrescriptionUploadResponse,
+  PendingPrescriptionCheckout,
   UploadPrescriptionParams,
 } from '../types/PrescriptionTypes';
 import { api } from './axiosInstance';
@@ -33,6 +34,11 @@ export const getMyPrescriptions = async (
   params: GetMyPrescriptionsParams = {}
 ): Promise<CustomerPrescriptionReview[]> => {
   const response = await api.get<CustomerPrescriptionReview[]>('/prescriptions/my', { params });
+  return response.data;
+};
+
+export const getPendingPrescriptionCheckouts = async (): Promise<PendingPrescriptionCheckout[]> => {
+  const response = await api.get<PendingPrescriptionCheckout[]>('/me/pending-prescription-checkouts');
   return response.data;
 };
 

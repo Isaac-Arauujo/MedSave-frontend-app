@@ -33,3 +33,42 @@ export const getPrescriptionReviewStatusLabel = (status: string): string =>
 
 export const getPrescriptionRequirementStatusLabel = (status: string): string =>
   PRESCRIPTION_REQUIREMENT_STATUS_LABELS[status] ?? status;
+
+export const getPendingCheckoutTitle = (status: string): string => {
+  switch (status) {
+    case 'PENDING':
+    case 'UNDER_REVIEW':
+      return 'Compra aguardando análise da receita';
+    case 'APPROVED':
+      return 'Compra aguardando pagamento';
+    case 'REJECTED':
+      return 'Compra precisa de correção';
+    default:
+      return 'Compra em andamento';
+  }
+};
+
+export const getPendingCheckoutStatusLabel = (status: string): string => {
+  switch (status) {
+    case 'PENDING':
+    case 'UNDER_REVIEW':
+      return 'Receita em análise';
+    case 'APPROVED':
+      return 'Receita aprovada';
+    case 'REJECTED':
+      return 'Receita recusada';
+    default:
+      return 'Compra em andamento';
+  }
+};
+
+export const getPendingCheckoutActionLabel = (status: string): string => {
+  switch (status) {
+    case 'APPROVED':
+      return 'Continuar pagamento';
+    case 'REJECTED':
+      return 'Enviar nova receita';
+    default:
+      return 'Acompanhar';
+  }
+};

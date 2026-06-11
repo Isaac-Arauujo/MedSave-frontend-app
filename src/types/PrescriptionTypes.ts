@@ -41,6 +41,18 @@ export interface GetMyPrescriptionsParams {
   status?: PrescriptionReviewStatus;
 }
 
+export interface PendingPrescriptionCheckout {
+  reviewId: number;
+  listingId: number;
+  productId: number;
+  productName: string;
+  pharmacyName: string;
+  prescriptionStatus: PrescriptionReviewStatus;
+  rejectionReason?: string | null;
+  uploadedAt: string;
+  actionUrl: string;
+}
+
 export type PharmacyPrescriptionTab = 'pending' | 'approved' | 'rejected' | 'all';
 
 export interface PharmacyPrescriptionReviewSummary {

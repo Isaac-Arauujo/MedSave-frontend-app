@@ -14,6 +14,7 @@ const ACCEPTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
 interface PrescriptionUploadCardProps {
   item: CartItemResponse;
   checkoutSessionToken?: string;
+  resumeFromEmail?: boolean;
   onUploadSuccess: () => Promise<void> | void;
   onRemoveItem: () => Promise<void> | void;
   isRemoving?: boolean;
@@ -52,12 +53,14 @@ const validateFile = (file: File): string | null => {
 export const PrescriptionUploadCard = ({
   item,
   checkoutSessionToken,
+  resumeFromEmail = false,
   onUploadSuccess,
   onRemoveItem,
   isRemoving = false,
 }: PrescriptionUploadCardProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadAcknowledged, setUploadAcknowledged] = useState(false);
 
   const status = item.prescriptionStatus ?? 'REQUIRED_NOT_UPLOADED';
   const canUploadAgain =
@@ -70,6 +73,8 @@ export const PrescriptionUploadCard = ({
     status === 'UNDER_REVIEW' ||
     status === 'REJECTED' ||
     status === 'REQUIRED_NOT_UPLOADED';
+  const showUploadConfirmation =
+    uploadAcknowledged || status === 'PENDING' || status === 'UNDER_REVIEW';
 
   const handleSelectFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -92,6 +97,7 @@ export const PrescriptionUploadCard = ({
         listingId: item.listingId,
         checkoutSessionToken,
       });
+      setUploadAcknowledged(true);
       toast.success('Receita enviada para análise da farmácia.');
       await onUploadSuccess();
     } catch (err) {
@@ -105,21 +111,24 @@ export const PrescriptionUploadCard = ({
     switch (status) {
       case 'APPROVED':
         return (
-          <p className="text-sm text-on-surface-variant">
-            Você já pode continuar com o pagamento.
-          </p>
+          <div className="space-y-2 text-sm text-on-surface-variant">
+            <p>Você já pode continuar com o pagamento.</p>
+            {resumeFromEmail && (
+              <p className="font-medium text-on-surface">
+                Sua receita foi aprovada. Finalize o pedido para continuar.
+              </p>
+            )}
+          </div>
         );
       case 'PENDING':
-        return (
-          <p className="text-sm text-on-surface-variant">
-            Aguardando análise da farmácia.
-          </p>
-        );
       case 'UNDER_REVIEW':
         return (
-          <p className="text-sm text-on-surface-variant">
-            A farmácia está analisando sua receita.
-          </p>
+          <div className="space-y-2 text-sm text-on-surface-variant">
+            <p>Aguardando análise da farmácia.</p>
+            <p>
+              Você será avisado por e-mail quando a receita for aprovada ou recusada.
+            </p>
+          </div>
         );
       case 'REJECTED':
         return (
@@ -157,6 +166,25 @@ export const PrescriptionUploadCard = ({
           {getPrescriptionRequirementStatusLabel(status)}
         </Badge>
       </div>
+
+      {showUploadConfirmation && (
+        <div
+          className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-on-surface"
+          role="status"
+        >
+          <p className="font-medium">Receita enviada para análise.</p>
+          <p className="mt-2 text-on-surface-variant">
+            A farmácia irá analisar sua receita. Você receberá o resultado por e-mail.
+          </p>
+          <p className="mt-2 text-on-surface-variant">
+            Verifique também sua caixa de spam, promoções e lixo eletrônico.
+          </p>
+          <p className="mt-2 text-on-surface-variant">
+            Enquanto a receita estiver em análise, sua compra ficará aguardando e você poderá
+            voltar para continuar depois.
+          </p>
+        </div>
+      )}
 
       {renderStatusMessage()}
 
