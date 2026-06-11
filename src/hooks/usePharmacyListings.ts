@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import * as listingApi from '../api/listingApi';
-import * as productApi from '../api/productApi';
 import type {
   CreateListingRequest,
   ListingResponse,
   UpdateListingRequest,
 } from '../types/ListingTypes';
-import type { ProductResponse } from '../types/ProductTypes';
 import { handleApiError } from '../utils/handleApiError';
 
 const PAGE_SIZE = 10;
 
 export const usePharmacyListings = () => {
   const [listings, setListings] = useState<ListingResponse[]>([]);
-  const [products, setProducts] = useState<ProductResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProductsLoading, setIsProductsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,18 +34,6 @@ export const usePharmacyListings = () => {
       setIsLoading(false);
     }
   }, [currentPage]);
-
-  const loadProducts = useCallback(async () => {
-    try {
-      setIsProductsLoading(true);
-      const response = await productApi.getCatalogProducts();
-      setProducts(response.content);
-    } catch (err) {
-      toast.error(handleApiError(err));
-    } finally {
-      setIsProductsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -147,15 +131,12 @@ export const usePharmacyListings = () => {
 
   return {
     listings,
-    products,
     currentPage,
     totalPages,
     isLoading,
-    isProductsLoading,
     isSubmitting,
     error,
     setCurrentPage,
-    loadProducts,
     createListing,
     updateListing,
     deleteListing,

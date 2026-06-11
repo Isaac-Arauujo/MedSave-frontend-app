@@ -112,3 +112,21 @@ export interface UploadedProductImage {
 export interface ProductImageUploadResponse {
   images: UploadedProductImage[];
 }
+
+export interface PharmacyProductSummary {
+  id: number;
+  name: string;
+  manufacturer?: string;
+  brand?: string;
+  activeIngredient?: string;
+  dosage?: string;
+  pharmaceuticalForm?: string;
+  presentation?: string;
+  ean?: string;
+  msRegistration?: string;
+  category: ProductCategory;
+  requiresPrescription: boolean;
+  prescriptionType?: PrescriptionType;
+  allowOnlineSale: boolean;
+  imageUrl?: string;
+}

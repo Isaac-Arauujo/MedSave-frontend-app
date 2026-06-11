@@ -12,3 +12,17 @@ export const isValidEanLength = (value: string): boolean => {
 
 export const EAN_INVALID_MESSAGE =
   'EAN/GTIN inválido. Informe um código com 8, 12, 13 ou 14 dígitos.';
+
+export const shouldSearchPharmacyProducts = (term: string): boolean => {
+  const trimmed = term.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  const digitsOnly = normalizeEan(trimmed);
+  if (digitsOnly.length >= 8 && /^[\d\s-]+$/.test(trimmed)) {
+    return true;
+  }
+
+  return trimmed.length >= 2;
+};

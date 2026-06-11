@@ -1,6 +1,9 @@
-import type { ProductResponse } from '../types/ProductTypes';
+import type { PrescriptionType } from '../types/ProductTypes';
 
-export const getProductPrescriptionLabel = (product: ProductResponse): string => {
+export const getProductPrescriptionLabel = (product: {
+  requiresPrescription: boolean;
+  prescriptionType?: PrescriptionType;
+}): string => {
   if (!product.requiresPrescription) {
     return 'Sem receita';
   }
