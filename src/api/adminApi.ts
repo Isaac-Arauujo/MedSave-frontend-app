@@ -198,8 +198,12 @@ export const resendAdminOrderEmail = async (orderId: number): Promise<void> => {
   await api.post(`/admin/orders/${orderId}/resend-email`);
 };
 
+export interface AdminProductListParams extends PaginationParams {
+  search?: string;
+}
+
 export const getProducts = async (
-  params: PaginationParams = {}
+  params: AdminProductListParams = {}
 ): Promise<PageResponse<ProductResponse>> => {
   const response = await api.get<PageResponse<ProductResponse>>('/admin/products', { params });
   return response.data;

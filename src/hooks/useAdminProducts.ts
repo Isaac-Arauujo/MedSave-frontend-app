@@ -14,9 +14,20 @@ export const useAdminProducts = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setCurrentPage(0);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [search]);
 
   const refetch = useCallback(async () => {
     try {
@@ -25,6 +36,7 @@ export const useAdminProducts = () => {
       const response = await adminApi.getProducts({
         page: currentPage,
         size: PAGE_SIZE,
+        search: debouncedSearch || undefined,
       });
       setProducts(response.content);
       setTotalPages(response.totalPages);
@@ -33,7 +45,7 @@ export const useAdminProducts = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, debouncedSearch]);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,6 +57,7 @@ export const useAdminProducts = () => {
         const response = await adminApi.getProducts({
           page: currentPage,
           size: PAGE_SIZE,
+          search: debouncedSearch || undefined,
         });
 
         if (isMounted) {
@@ -67,7 +80,7 @@ export const useAdminProducts = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentPage]);
+  }, [currentPage, debouncedSearch]);
 
   const createProduct = useCallback(
     async (data: CreateProductRequest) => {
@@ -133,10 +146,12 @@ export const useAdminProducts = () => {
     products,
     currentPage,
     totalPages,
+    search,
     isLoading,
     isSubmitting,
     error,
     setCurrentPage,
+    setSearch,
     createProduct,
     updateProduct,
     deleteProduct,
