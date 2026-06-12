@@ -48,9 +48,10 @@ const statusBadgeClass = (status: ListingImportRowResult['status']) => {
   }
 };
 
-const validateCsvFile = (file: File): string | null => {
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    return 'Envie um arquivo CSV válido.';
+const validateImportFile = (file: File): string | null => {
+  const lowerName = file.name.toLowerCase();
+  if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+    return 'Envie um arquivo CSV ou XLSX válido.';
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return 'O arquivo excede o limite permitido.';
@@ -127,7 +128,7 @@ export const PharmacyListingImportModal = ({
     if (!file) {
       return;
     }
-    const validationError = validateCsvFile(file);
+    const validationError = validateImportFile(file);
     if (validationError) {
       toast.error(validationError);
       event.target.value = '';
@@ -152,7 +153,7 @@ export const PharmacyListingImportModal = ({
 
   const handleImport = async () => {
     if (!selectedFile) {
-      toast.error('Selecione um arquivo CSV.');
+      toast.error('Selecione um arquivo CSV ou XLSX.');
       return;
     }
     if (isSubmitting) {
@@ -185,7 +186,7 @@ export const PharmacyListingImportModal = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Importar anúncios por CSV"
+      title="Importar anúncios"
       size="xl"
       footer={
         result ? (
@@ -226,15 +227,14 @@ export const PharmacyListingImportModal = ({
         {!result && (
           <>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-600">
-              <li>Baixe o modelo CSV.</li>
-              <li>Abra o arquivo no Excel ou Google Sheets.</li>
+              <li>Baixe o modelo CSV ou prepare sua planilha XLSX.</li>
               <li>Preencha uma linha para cada produto/lote.</li>
-              <li>Salve o arquivo como CSV.</li>
-              <li>Envie o CSV aqui para criar ou atualizar anúncios.</li>
+              <li>Você pode importar arquivos .csv ou .xlsx.</li>
+              <li>Envie o arquivo aqui para criar ou atualizar anúncios.</li>
             </ol>
 
             <p className="text-sm text-gray-600">
-              Dica: o modelo usa ponto e vírgula para abrir melhor em colunas no Excel.
+              Dica: o modelo CSV usa ponto e vírgula para abrir melhor em colunas no Excel.
             </p>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -244,19 +244,19 @@ export const PharmacyListingImportModal = ({
                 isLoading={isDownloadingTemplate}
                 className="w-full sm:w-auto"
               >
-                Baixar modelo CSV para Excel
+                Baixar modelo CSV
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full sm:w-auto"
               >
-                Selecionar CSV para importar
+                Selecionar arquivo CSV ou XLSX
               </Button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
                 onChange={handleSelectFile}
               />
@@ -313,7 +313,7 @@ export const PharmacyListingImportModal = ({
                 <p className="font-medium text-gray-900">EANs enviados para análise</p>
                 <p className="mt-1">
                   Alguns produtos não existem no catálogo mestre. Enviamos essas solicitações ao
-                  admin. Depois que o produto for cadastrado, reimporte o CSV para criar os anúncios.
+                  admin. Depois que o produto for cadastrado, reimporte o arquivo para criar os anúncios.
                 </p>
               </div>
             )}

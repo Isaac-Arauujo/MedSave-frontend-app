@@ -85,6 +85,30 @@ export const importListingsCsv = async (file: File): Promise<ListingImportResult
   return response.data;
 };
 
+export const importListingsXlsx = async (file: File): Promise<ListingImportResultResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post<ListingImportResultResponse>(
+    '/pharmacy/listings/import-xlsx',
+    formData,
+    {
+      headers: { 'Content-Type': undefined },
+    }
+  );
+  return response.data;
+};
+
+export const importListingsFile = async (file: File): Promise<ListingImportResultResponse> => {
+  const lowerName = file.name.toLowerCase();
+  if (lowerName.endsWith('.csv')) {
+    return importListingsCsv(file);
+  }
+  if (lowerName.endsWith('.xlsx')) {
+    return importListingsXlsx(file);
+  }
+  throw new Error('Envie um arquivo CSV ou XLSX válido.');
+};
+
 export const downloadListingImportTemplate = async (): Promise<void> => {
   const response = await api.get<Blob>('/pharmacy/listings/import-template', {
     responseType: 'blob',

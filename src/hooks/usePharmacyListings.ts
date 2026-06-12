@@ -111,12 +111,12 @@ export const usePharmacyListings = () => {
     [refetch]
   );
 
-  const importListingsCsv = useCallback(
+  const importListingsFile = useCallback(
     async (file: File): Promise<ListingImportResultResponse> => {
       try {
         setIsImporting(true);
         setError(null);
-        const result = await listingApi.importListingsCsv(file);
+        const result = await listingApi.importListingsFile(file);
         await refetch();
         return result;
       } catch (err) {
@@ -162,7 +162,7 @@ export const usePharmacyListings = () => {
     setCurrentPage,
     createListing,
     updateListing,
-    importListingsCsv,
+    importListingsFile,
     deleteListing,
     refetch,
   };

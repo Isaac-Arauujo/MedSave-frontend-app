@@ -28,7 +28,7 @@ export const PharmacyListingsPage = () => {
     setCurrentPage,
     createListing,
     updateListing,
-    importListingsCsv,
+    importListingsFile,
     deleteListing,
     refetch,
   } = usePharmacyListings();
@@ -92,7 +92,7 @@ export const PharmacyListingsPage = () => {
     >
       <div className="mb-6 flex flex-wrap justify-end gap-2">
         <Button variant="secondary" onClick={() => setImportOpen(true)}>
-          Importar CSV
+          Importar anúncios
         </Button>
         <Button variant="primary" onClick={handleOpenCreate}>
           Novo anúncio
@@ -253,7 +253,7 @@ export const PharmacyListingsPage = () => {
       <PharmacyListingImportModal
         isOpen={importOpen}
         onClose={() => setImportOpen(false)}
-        onImport={importListingsCsv}
+        onImport={importListingsFile}
         isSubmitting={isImporting}
       />
 
