@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { downloadListingImportTemplate } from '../../api/listingApi';
+import { downloadListingImportTemplate, downloadListingImportTemplateXlsx } from '../../api/listingApi';
 import type { ListingImportResultResponse, ListingImportRowResult } from '../../types/ListingTypes';
 import {
   downloadImportReportCsv,
@@ -51,7 +51,7 @@ const statusBadgeClass = (status: ListingImportRowResult['status']) => {
 const validateImportFile = (file: File): string | null => {
   const lowerName = file.name.toLowerCase();
   if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
-    return 'Envie um arquivo CSV ou XLSX válido.';
+    return 'Envie um arquivo .xlsx ou .csv válido.';
   }
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return 'O arquivo excede o limite permitido.';
@@ -104,7 +104,8 @@ export const PharmacyListingImportModal = ({
 }: PharmacyListingImportModalProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+  const [isDownloadingCsvTemplate, setIsDownloadingCsvTemplate] = useState(false);
+  const [isDownloadingExcelTemplate, setIsDownloadingExcelTemplate] = useState(false);
   const [result, setResult] = useState<ListingImportResultResponse | null>(null);
   const [statusFilter, setStatusFilter] = useState<ListingImportStatusFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,20 +141,31 @@ export const PharmacyListingImportModal = ({
     setSearchQuery('');
   };
 
-  const handleDownloadTemplate = async () => {
+  const handleDownloadCsvTemplate = async () => {
     try {
-      setIsDownloadingTemplate(true);
+      setIsDownloadingCsvTemplate(true);
       await downloadListingImportTemplate();
     } catch (err) {
       toast.error(handleApiError(err));
     } finally {
-      setIsDownloadingTemplate(false);
+      setIsDownloadingCsvTemplate(false);
+    }
+  };
+
+  const handleDownloadExcelTemplate = async () => {
+    try {
+      setIsDownloadingExcelTemplate(true);
+      await downloadListingImportTemplateXlsx();
+    } catch (err) {
+      toast.error(handleApiError(err));
+    } finally {
+      setIsDownloadingExcelTemplate(false);
     }
   };
 
   const handleImport = async () => {
     if (!selectedFile) {
-      toast.error('Selecione um arquivo CSV ou XLSX.');
+      toast.error('Selecione uma planilha antes de importar.');
       return;
     }
     if (isSubmitting) {
@@ -173,7 +185,11 @@ export const PharmacyListingImportModal = ({
         importResult.updatedCount > 0 ||
         (importResult.pendingReviewCount ?? 0) > 0
       ) {
-        toast.error('Importação concluída com alguns itens para revisão ou erros. Confira o relatório abaixo.');
+        if ((importResult.pendingReviewCount ?? 0) > 0) {
+          toast.error('Alguns EANs foram enviados para análise do admin. Confira o relatório abaixo.');
+        } else {
+          toast.error('Importação concluída com alguns itens para revisão ou erros. Confira o relatório abaixo.');
+        }
       } else {
         toast.error('Nenhuma linha foi importada. Confira o relatório abaixo.');
       }
@@ -227,21 +243,28 @@ export const PharmacyListingImportModal = ({
         {!result && (
           <>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-600">
-              <li>Baixe o modelo CSV ou prepare sua planilha XLSX.</li>
-              <li>Preencha uma linha para cada produto/lote.</li>
-              <li>Você pode importar arquivos .csv ou .xlsx.</li>
-              <li>Envie o arquivo aqui para criar ou atualizar anúncios.</li>
+              <li>Baixe o modelo Excel.</li>
+              <li>Preencha a aba &quot;Importar anúncios&quot;.</li>
+              <li>Envie o arquivo .xlsx ou .csv aqui.</li>
             </ol>
 
             <p className="text-sm text-gray-600">
-              Dica: o modelo CSV usa ponto e vírgula para abrir melhor em colunas no Excel.
+              Recomendamos usar o modelo Excel, pois ele contém instruções, exemplos e legendas.
             </p>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button
                 variant="secondary"
-                onClick={() => void handleDownloadTemplate()}
-                isLoading={isDownloadingTemplate}
+                onClick={() => void handleDownloadExcelTemplate()}
+                isLoading={isDownloadingExcelTemplate}
+                className="w-full sm:w-auto"
+              >
+                Baixar modelo Excel
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => void handleDownloadCsvTemplate()}
+                isLoading={isDownloadingCsvTemplate}
                 className="w-full sm:w-auto"
               >
                 Baixar modelo CSV
@@ -251,7 +274,7 @@ export const PharmacyListingImportModal = ({
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full sm:w-auto"
               >
-                Selecionar arquivo CSV ou XLSX
+                Selecionar arquivo
               </Button>
               <input
                 ref={fileInputRef}
@@ -264,7 +287,10 @@ export const PharmacyListingImportModal = ({
 
             {selectedFile && (
               <p className="text-sm text-gray-700">
-                Arquivo selecionado: <span className="font-medium">{selectedFile.name}</span>
+                {selectedFile.name.toLowerCase().endsWith('.xlsx')
+                  ? 'Arquivo Excel selecionado: '
+                  : 'Arquivo CSV selecionado: '}
+                <span className="font-medium">{selectedFile.name}</span>
               </p>
             )}
           </>

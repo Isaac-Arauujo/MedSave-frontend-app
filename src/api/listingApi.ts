@@ -122,3 +122,17 @@ export const downloadListingImportTemplate = async (): Promise<void> => {
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+
+export const downloadListingImportTemplateXlsx = async (): Promise<void> => {
+  const response = await api.get<Blob>('/pharmacy/listings/import-template-xlsx', {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(response.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'medisave-modelo-importacao-anuncios.xlsx';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
