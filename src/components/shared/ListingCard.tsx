@@ -5,6 +5,11 @@ import type { ListingResponse } from '../../types/ListingTypes';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 import { getImageUrl } from '../../utils/getImageUrl';
+import {
+  getListingPrescriptionLabel,
+  getListingSubtitle,
+  getPrescriptionBadgeVariant,
+} from '../../utils/listingProductDisplayUtils';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 
@@ -27,6 +32,8 @@ export const ListingCard = ({
 }: ListingCardProps) => {
   const imageUrl = getImageUrl(listing.product.images[0]);
   const detailPath = ROUTES.LISTING_DETAIL.replace(':id', String(listing.id));
+  const subtitle = getListingSubtitle(listing.product);
+  const prescriptionLabel = getListingPrescriptionLabel(listing.product);
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-lowest transition-shadow hover:shadow-md">
@@ -59,6 +66,14 @@ export const ListingCard = ({
                 {listing.product.name}
               </h3>
             </Link>
+            {subtitle && (
+              <p className="mt-1 line-clamp-2 text-sm text-on-surface-variant">{subtitle}</p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge variant={getPrescriptionBadgeVariant(listing.product)}>
+                {prescriptionLabel}
+              </Badge>
+            </div>
             <Link
               to={detailPath}
               className="text-sm font-medium text-primary hover:underline"

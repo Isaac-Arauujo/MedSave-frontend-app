@@ -5,6 +5,11 @@ import type { ListingResponse } from '../../types/ListingTypes';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 import { getImageUrl } from '../../utils/getImageUrl';
+import {
+  getListingPrescriptionLabel,
+  getListingSubtitle,
+  getPrescriptionBadgeVariant,
+} from '../../utils/listingProductDisplayUtils';
 import { Badge } from '../ui/Badge';
 
 interface RecommendedListingCardProps {
@@ -17,6 +22,8 @@ export const RecommendedListingCard = ({ listing }: RecommendedListingCardProps)
   const categoryLabel = listing.product.category
     ? getCategoryLabel(listing.product.category)
     : listing.product.activeIngredient;
+  const subtitle = getListingSubtitle(listing.product);
+  const prescriptionLabel = getListingPrescriptionLabel(listing.product);
 
   return (
     <Link
@@ -50,9 +57,14 @@ export const RecommendedListingCard = ({ listing }: RecommendedListingCardProps)
         <h4 className="line-clamp-2 font-headline text-sm font-semibold text-on-surface">
           {listing.product.name}
         </h4>
-        {categoryLabel && (
+        {subtitle ? (
+          <p className="line-clamp-2 text-xs text-on-surface-variant">{subtitle}</p>
+        ) : categoryLabel ? (
           <p className="line-clamp-1 text-xs text-on-surface-variant">{categoryLabel}</p>
-        )}
+        ) : null}
+        <Badge variant={getPrescriptionBadgeVariant(listing.product)} className="w-fit">
+          {prescriptionLabel}
+        </Badge>
         <div className="flex flex-wrap items-end gap-1.5">
           <p className="font-headline text-base font-bold text-primary">
             {formatCurrency(listing.discountPrice)}

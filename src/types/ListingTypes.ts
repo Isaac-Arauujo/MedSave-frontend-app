@@ -2,8 +2,28 @@ export interface ListingProductSummary {
   id: number;
   name: string;
   activeIngredient?: string;
+  manufacturer?: string;
+  brand?: string;
+  composition?: string;
+  dosage?: string;
+  pharmaceuticalForm?: string;
+  presentation?: string;
+  packageQuantity?: string;
+  administrationRoute?: string;
+  therapeuticClass?: string;
+  msRegistration?: string;
+  ean?: string;
+  bulaUrl?: string;
+  shortDescription?: string;
+  safetyNotice?: string;
   category?: import('./ProductTypes').ProductCategory;
   requiresPrescription?: boolean;
+  prescriptionType?: import('./ProductTypes').PrescriptionType;
+  requiresPharmacistReview?: boolean;
+  allowOnlineSale?: boolean;
+  allowDeliveryWithPrescription?: boolean;
+  allowPickupWithPrescription?: boolean;
+  requiresOriginalPrescriptionAtPickup?: boolean;
   images: string[];
 }
 
