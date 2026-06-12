@@ -22,6 +22,7 @@ const STATUS_FILTERS: { id: ListingImportStatusFilter; label: string }[] = [
   { id: 'ALL', label: 'Todos' },
   { id: 'CREATED', label: 'Criados' },
   { id: 'UPDATED', label: 'Atualizados' },
+  { id: 'PENDING_REVIEW', label: 'Análise' },
   { id: 'ERROR', label: 'Erros' },
 ];
 
@@ -38,6 +39,8 @@ const statusBadgeClass = (status: ListingImportRowResult['status']) => {
       return 'success' as const;
     case 'UPDATED':
       return 'neutral' as const;
+    case 'PENDING_REVIEW':
+      return 'warning' as const;
     case 'ERROR':
       return 'danger' as const;
     default:
@@ -162,10 +165,14 @@ export const PharmacyListingImportModal = ({
       setStatusFilter('ALL');
       setSearchQuery('');
 
-      if (importResult.errorCount === 0) {
+      if (importResult.errorCount === 0 && (importResult.pendingReviewCount ?? 0) === 0) {
         toast.success('Importação concluída com sucesso.');
-      } else if (importResult.createdCount > 0 || importResult.updatedCount > 0) {
-        toast.error('Importação concluída com alguns erros. Confira o relatório abaixo.');
+      } else if (
+        importResult.createdCount > 0 ||
+        importResult.updatedCount > 0 ||
+        (importResult.pendingReviewCount ?? 0) > 0
+      ) {
+        toast.error('Importação concluída com alguns itens para revisão ou erros. Confira o relatório abaixo.');
       } else {
         toast.error('Nenhuma linha foi importada. Confira o relatório abaixo.');
       }
@@ -272,7 +279,7 @@ export const PharmacyListingImportModal = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Total</p>
                 <p className="mt-1 text-2xl font-semibold text-gray-900">{result.totalRows}</p>
@@ -287,17 +294,35 @@ export const PharmacyListingImportModal = ({
                 </p>
                 <p className="mt-1 text-2xl font-semibold text-blue-800">{result.updatedCount}</p>
               </div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
+                  Enviados para análise
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-amber-800">
+                  {result.pendingReviewCount ?? 0}
+                </p>
+              </div>
               <div className="rounded-lg border border-red-200 bg-red-50 p-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-red-700">Erros</p>
                 <p className="mt-1 text-2xl font-semibold text-red-800">{result.errorCount}</p>
               </div>
             </div>
 
+            {(result.pendingReviewCount ?? 0) > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-gray-700">
+                <p className="font-medium text-gray-900">EANs enviados para análise</p>
+                <p className="mt-1">
+                  Alguns produtos não existem no catálogo mestre. Enviamos essas solicitações ao
+                  admin. Depois que o produto for cadastrado, reimporte o CSV para criar os anúncios.
+                </p>
+              </div>
+            )}
+
             {result.errorCount > 0 && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-gray-700">
                 <p className="font-medium text-gray-900">Como corrigir os erros?</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li>Produto não encontrado: confira se o EAN existe no catálogo mestre.</li>
+                  <li>Produto não encontrado: o EAN foi enviado para análise do admin.</li>
                   <li>EAN inválido: use 8, 12, 13 ou 14 dígitos.</li>
                   <li>Preço inválido: use formato 12,90 ou 12.90.</li>
                   <li>Validade inválida: use 30/08/2026 ou 2026-08-30.</li>

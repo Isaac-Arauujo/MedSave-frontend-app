@@ -5,6 +5,8 @@ export type ListingImportStatusFilter = 'ALL' | ListingImportStatus;
 
 export const LISTING_IMPORT_ERROR_LABELS: Record<string, string> = {
   PRODUCT_EAN_NOT_FOUND: 'Produto não encontrado no catálogo mestre.',
+  PRODUCT_EAN_PENDING_REVIEW:
+    'Produto não encontrado no catálogo. Enviamos este EAN para análise do admin.',
   INVALID_EAN: 'EAN/GTIN inválido.',
   INVALID_ORIGINAL_PRICE: 'Preço original inválido.',
   INVALID_DISCOUNT_PRICE: 'Preço promocional inválido.',
@@ -24,6 +26,8 @@ export const getImportStatusLabel = (status: ListingImportStatus): string => {
       return 'Criado';
     case 'UPDATED':
       return 'Atualizado';
+    case 'PENDING_REVIEW':
+      return 'Enviado para análise';
     case 'ERROR':
       return 'Erro';
     default:
@@ -37,6 +41,8 @@ export const getImportStatusCsvLabel = (status: ListingImportStatus): string => 
       return 'CRIADO';
     case 'UPDATED':
       return 'ATUALIZADO';
+    case 'PENDING_REVIEW':
+      return 'ANALISE';
     case 'ERROR':
       return 'ERRO';
     default:

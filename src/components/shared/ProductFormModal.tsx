@@ -92,6 +92,11 @@ interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialProduct?: ProductResponse;
+  prefill?: {
+    ean?: string;
+    name?: string;
+    manufacturer?: string;
+  };
   onSubmit: (data: CreateProductRequest) => Promise<void>;
   isSubmitting?: boolean;
 }
@@ -242,6 +247,7 @@ export const ProductFormModal = ({
   isOpen,
   onClose,
   initialProduct,
+  prefill,
   onSubmit,
   isSubmitting = false,
 }: ProductFormModalProps) => {
@@ -299,11 +305,19 @@ export const ProductFormModal = ({
           initialProduct.requiresOriginalPrescriptionAtPickup ?? false,
       });
       setImageUrls(initialProduct.images ?? []);
+    } else if (prefill) {
+      reset({
+        ...emptyValues,
+        ean: prefill.ean ?? '',
+        name: prefill.name ?? '',
+        manufacturer: prefill.manufacturer ?? '',
+      });
+      setImageUrls([]);
     } else {
       reset(emptyValues);
       setImageUrls([]);
     }
-  }, [isOpen, initialProduct, reset]);
+  }, [isOpen, initialProduct, prefill, reset]);
 
   useEffect(() => {
     if (!isOpen) {

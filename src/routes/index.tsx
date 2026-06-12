@@ -13,6 +13,7 @@ import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminListingsPage } from '../pages/admin/AdminListingsPage';
 import { AdminPharmaciesPage } from '../pages/admin/AdminPharmaciesPage';
 import { AdminProductsPage } from '../pages/admin/AdminProductsPage';
+import { AdminProductRequestsPage } from '../pages/admin/AdminProductRequestsPage';
 import { PharmacyDashboardPage } from '../pages/pharmacy/PharmacyDashboardPage';
 import { PharmacyListingsPage } from '../pages/pharmacy/PharmacyListingsPage';
 import { PharmacyOrdersPage } from '../pages/pharmacy/PharmacyOrdersPage';
@@ -221,6 +222,14 @@ export const AppRouter = () => (
           element={
             <AdminRoute>
               <AdminProductsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_PRODUCT_REQUESTS}
+          element={
+            <AdminRoute>
+              <AdminProductRequestsPage />
             </AdminRoute>
           }
         />

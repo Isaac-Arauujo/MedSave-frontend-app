@@ -31,6 +31,12 @@ import type {
   UpdateProductRequest,
 } from '../types/ProductTypes';
 import type { UserProfileResponse } from '../types/UserTypes';
+import type {
+  AdminProductCatalogRequestListParams,
+  ProductCatalogRequestResponse,
+  RejectProductCatalogRequestPayload,
+  ResolveProductCatalogRequestPayload,
+} from '../types/ProductCatalogRequestTypes';
 import { api } from './axiosInstance';
 
 export interface AdminDashboardStatsResponse {
@@ -260,4 +266,45 @@ export const updateCoupon = async (
 
 export const deleteCoupon = async (id: number): Promise<void> => {
   await api.delete(`/admin/coupons/${id}`);
+};
+
+export const getProductCatalogRequests = async (
+  params: AdminProductCatalogRequestListParams = {}
+): Promise<PageResponse<ProductCatalogRequestResponse>> => {
+  const response = await api.get<PageResponse<ProductCatalogRequestResponse>>(
+    '/admin/product-catalog-requests',
+    { params }
+  );
+  return response.data;
+};
+
+export const getProductCatalogRequest = async (
+  id: number
+): Promise<ProductCatalogRequestResponse> => {
+  const response = await api.get<ProductCatalogRequestResponse>(
+    `/admin/product-catalog-requests/${id}`
+  );
+  return response.data;
+};
+
+export const resolveProductCatalogRequest = async (
+  id: number,
+  data: ResolveProductCatalogRequestPayload
+): Promise<ProductCatalogRequestResponse> => {
+  const response = await api.post<ProductCatalogRequestResponse>(
+    `/admin/product-catalog-requests/${id}/resolve`,
+    data
+  );
+  return response.data;
+};
+
+export const rejectProductCatalogRequest = async (
+  id: number,
+  data: RejectProductCatalogRequestPayload
+): Promise<ProductCatalogRequestResponse> => {
+  const response = await api.post<ProductCatalogRequestResponse>(
+    `/admin/product-catalog-requests/${id}/reject`,
+    data
+  );
+  return response.data;
 };

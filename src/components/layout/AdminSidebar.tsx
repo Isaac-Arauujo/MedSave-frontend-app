@@ -15,6 +15,7 @@ const adminNavItems: AdminNavItem[] = [
   { to: ROUTES.ADMIN_USERS, label: 'Usuários', icon: 'manage_accounts' },
   { to: ROUTES.ADMIN_PHARMACIES, label: 'Farmácias', icon: 'local_pharmacy' },
   { to: ROUTES.ADMIN_PRODUCTS, label: 'Produtos', icon: 'medication' },
+  { to: ROUTES.ADMIN_PRODUCT_REQUESTS, label: 'Solicitações de produtos', icon: 'pending_actions' },
   { to: ROUTES.ADMIN_LISTINGS, label: 'Anúncios', icon: 'inventory_2' },
   { to: ROUTES.ADMIN_COUPONS, label: 'Cupons', icon: 'sell' },
   { to: ROUTES.ADMIN_ORDERS, label: 'Pedidos', icon: 'receipt_long' },

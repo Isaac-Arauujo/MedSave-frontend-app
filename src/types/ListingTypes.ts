@@ -49,7 +49,7 @@ export interface UpdateListingRequest {
   active?: boolean;
 }
 
-export type ListingImportStatus = 'CREATED' | 'UPDATED' | 'ERROR';
+export type ListingImportStatus = 'CREATED' | 'UPDATED' | 'ERROR' | 'PENDING_REVIEW';
 
 export interface ListingImportRowResult {
   line: number;
@@ -60,6 +60,7 @@ export interface ListingImportRowResult {
   expirationDate?: string;
   status: ListingImportStatus;
   listingId?: number;
+  catalogRequestId?: number;
   code?: string | null;
   message?: string;
 }
@@ -69,5 +70,6 @@ export interface ListingImportResultResponse {
   createdCount: number;
   updatedCount: number;
   errorCount: number;
+  pendingReviewCount?: number;
   rows: ListingImportRowResult[];
 }
