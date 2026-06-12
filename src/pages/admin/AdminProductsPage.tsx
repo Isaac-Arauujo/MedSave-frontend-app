@@ -11,7 +11,11 @@ import { PageLoader } from '../../components/ui/PageLoader';
 import { Pagination } from '../../components/ui/Pagination';
 import { getCategoryLabel } from '../../constants/productCategories';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
-import type { CreateProductRequest, ProductResponse } from '../../types/ProductTypes';
+import type {
+  CreateProductRequest,
+  ProductResponse,
+  UpdateProductRequest,
+} from '../../types/ProductTypes';
 import { getProductPrescriptionLabel } from '../../utils/productPrescriptionLabel';
 
 const formatCellValue = (value?: string) => value?.trim() || '—';
@@ -52,11 +56,16 @@ export const AdminProductsPage = () => {
     setEditingProduct(null);
   };
 
-  const handleFormSubmit = async (data: CreateProductRequest) => {
+  const handleFormSubmit = async (data: CreateProductRequest & { active?: boolean }) => {
     if (editingProduct) {
-      await updateProduct(editingProduct.id, data);
+      const { active, ...updateData } = data;
+      await updateProduct(editingProduct.id, {
+        ...updateData,
+        active,
+      } satisfies UpdateProductRequest);
     } else {
-      await createProduct(data);
+      const { active: _active, ...createData } = data;
+      await createProduct(createData);
     }
     handleCloseForm();
   };

@@ -15,7 +15,6 @@ import { PRESCRIPTION_TYPE_OPTIONS } from '../../constants/prescriptionOptions';
 import type { CreateProductRequest, PrescriptionType, ProductResponse } from '../../types/ProductTypes';
 import { EAN_INVALID_MESSAGE, isValidEanLength, normalizeEan } from '../../utils/productEan';
 import { ProductImageUploader } from '../admin/ProductImageUploader';
-import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -66,6 +65,7 @@ const productSchema = z
     allowDeliveryWithPrescription: z.boolean(),
     allowPickupWithPrescription: z.boolean(),
     requiresOriginalPrescriptionAtPickup: z.boolean(),
+    active: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.ean && !isValidEanLength(data.ean)) {
@@ -97,7 +97,7 @@ interface ProductFormModalProps {
     name?: string;
     manufacturer?: string;
   };
-  onSubmit: (data: CreateProductRequest) => Promise<void>;
+  onSubmit: (data: CreateProductRequest & { active?: boolean }) => Promise<void>;
   isSubmitting?: boolean;
 }
 
@@ -182,6 +182,7 @@ const emptyValues: ProductFormData = {
   allowDeliveryWithPrescription: true,
   allowPickupWithPrescription: true,
   requiresOriginalPrescriptionAtPickup: false,
+  active: true,
 };
 
 const trimOptional = (value?: string) => {
@@ -303,6 +304,7 @@ export const ProductFormModal = ({
         allowPickupWithPrescription: initialProduct.allowPickupWithPrescription ?? true,
         requiresOriginalPrescriptionAtPickup:
           initialProduct.requiresOriginalPrescriptionAtPickup ?? false,
+        active: initialProduct.active ?? true,
       });
       setImageUrls(initialProduct.images ?? []);
     } else if (prefill) {
@@ -329,14 +331,35 @@ export const ProductFormModal = ({
       return;
     }
 
-    const defaults = getDefaultsForPrescriptionType(prescriptionType, requiresPrescription);
-    setValue('requiresPrescription', defaults.requiresPrescription);
+    if (!requiresPrescription || prescriptionType === 'NONE') {
+      return;
+    }
+
+    const defaults = getDefaultsForPrescriptionType(prescriptionType, true);
     setValue('requiresPharmacistReview', defaults.requiresPharmacistReview);
     setValue('allowOnlineSale', defaults.allowOnlineSale);
     setValue('allowDeliveryWithPrescription', defaults.allowDeliveryWithPrescription);
     setValue('allowPickupWithPrescription', defaults.allowPickupWithPrescription);
     setValue('requiresOriginalPrescriptionAtPickup', defaults.requiresOriginalPrescriptionAtPickup);
   }, [isOpen, prescriptionType, requiresPrescription, setValue]);
+
+  const handleRequiresPrescriptionChange = (checked: boolean) => {
+    setValue('requiresPrescription', checked);
+    if (!checked) {
+      setValue('prescriptionType', 'NONE');
+      setValue('requiresPharmacistReview', false);
+      setValue('allowOnlineSale', true);
+      setValue('allowDeliveryWithPrescription', true);
+      setValue('allowPickupWithPrescription', true);
+      setValue('requiresOriginalPrescriptionAtPickup', false);
+      return;
+    }
+
+    if (prescriptionType === 'NONE') {
+      setValue('prescriptionType', 'SIMPLE');
+      setValue('requiresPharmacistReview', true);
+    }
+  };
 
   const handleFormSubmit = async (data: ProductFormData) => {
     const normalizedEan = data.ean ? normalizeEan(data.ean) : undefined;
@@ -367,6 +390,7 @@ export const ProductFormModal = ({
       allowPickupWithPrescription: data.allowPickupWithPrescription,
       requiresOriginalPrescriptionAtPickup: data.requiresOriginalPrescriptionAtPickup,
       images: imageUrls,
+      ...(isEditing ? { active: data.active } : {}),
     });
   };
 
@@ -444,14 +468,21 @@ export const ProductFormModal = ({
 
           <Input label="Marca" error={errors.brand?.message} maxLength={150} {...register('brand')} />
 
-          {isEditing && (
-            <div className="sm:col-span-2">
-              <p className="mb-1.5 text-sm font-medium text-on-surface">Produto ativo</p>
-              <Badge variant={initialProduct?.active ? 'success' : 'neutral'}>
-                {initialProduct?.active ? 'Ativo' : 'Inativo'}
-              </Badge>
-            </div>
-          )}
+          <div className="sm:col-span-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"
+                checked={watch('active')}
+                onChange={(event) => setValue('active', event.target.checked)}
+              />
+              <span className="text-sm text-on-surface">Produto ativo</span>
+            </label>
+            <FieldHint>
+              Quando desativado, o produto não aparece para farmácias criarem anúncios e não
+              aparece na vitrine pública.
+            </FieldHint>
+          </div>
         </FormSection>
 
         <FormSection title="Informações farmacêuticas">
@@ -538,7 +569,8 @@ export const ProductFormModal = ({
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"
-              {...register('requiresPrescription')}
+              checked={requiresPrescription}
+              onChange={(event) => handleRequiresPrescriptionChange(event.target.checked)}
             />
             <span className="text-sm text-on-surface">Exige receita médica</span>
           </label>
